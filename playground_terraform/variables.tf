@@ -56,3 +56,18 @@ variable "playground_warehouse_size" {
     type = string
     default = "xsmall"
 }
+
+variable "expiry_date_tag_database" {
+    type = string
+    default = "PLAY"
+}
+
+variable "expiry_date_tag_schema" {
+    type = string
+    default = "ADMINISTRATION"
+}
+
+variable "expiry_date_tag_name" {
+    type = string
+    default = "EXPIRY_DATE"
+}

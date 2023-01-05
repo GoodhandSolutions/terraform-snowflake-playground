@@ -1,3 +1,4 @@
+// TODO: Can we write a testing function for this?
 // -- SETTINGS
 var db_name = "SCRATCH";
 
@@ -7,6 +8,21 @@ var sql = "";
 var sqlResult = "";
 
 // TODO: Update to include all object types.
+// - ext table
+// - file format
+// - function
+// - masking policy
+// - materialized view
+// - pipe
+// - procedure
+// - row access policy
+// - sequence
+// - stage
+// - stream
+// - table
+// - task
+// - temporary table
+// - view
 
 try {
     // -- Find all tables that are either: > 30 days old and not tagged, OR where the expiry tag date has passed - drop

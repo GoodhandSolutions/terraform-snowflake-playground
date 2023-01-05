@@ -3,7 +3,6 @@
 ###############################################################
 resource "snowflake_database" "play" {
     name = var.playground_db_name
-    data_retention_time_in_days = var.data_retention_time
 }
 
 resource "snowflake_database_grant" "play_usage" {

@@ -8,7 +8,8 @@ resource "snowflake_schema" "ground" {
 
     database = "${snowflake_database.play.name}"
     name = var.playground_schema_name
-    
+
+    data_retention_days = var.data_retention_time
     is_transient = false
     is_managed = true
 }
