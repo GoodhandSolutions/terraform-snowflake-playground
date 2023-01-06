@@ -19,6 +19,11 @@ variable "snowflake_rsa_key_path" {
   type = string
 }
 
+variable "deployment_warehouse" {
+  type = string
+  default = "COMPUTE_WH"
+}
+
 ###############################################################
 # Playground Configuration Variables
 ###############################################################

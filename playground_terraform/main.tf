@@ -14,6 +14,7 @@ provider "snowflake" {
     username = var.snowflake_user
     account = var.snowflake_account
     region = var.snowflake_region
+    warehouse = var.deployment_warehouse
 
     private_key_path = var.snowflake_rsa_key_path
 

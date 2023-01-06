@@ -65,19 +65,19 @@ resource "snowflake_view" "object_tags" {
     name = "OBJECT_TAGS"
 
     statement = <<-SQL
-        SELECT 
-            object_database,
-            object_schema,
-            object_name,
-            domain,
-            TRY_TO_DATE(MAX(DECODE(tag_name, 'EXPIRY_DATE', tag_value, NULL))::varchar) AS expiry_date
-        FROM
-            snowflake.account_usage.tag_references
-        WHERE tag_database = '${var.expiry_date_tag_database}'
-            AND tag_schema = '${var.expiry_date_tag_schema}'
-            AND object_deleted IS null
-        GROUP BY 1,2,3,4;
-    SQL
+SELECT 
+    object_database,
+    object_schema,
+    object_name,
+    domain,
+    TRY_TO_DATE(MAX(DECODE(tag_name, 'EXPIRY_DATE', tag_value, NULL))::varchar) AS expiry_date
+FROM
+    snowflake.account_usage.tag_references
+WHERE tag_database = '${var.expiry_date_tag_database}'
+    AND tag_schema = '${var.expiry_date_tag_schema}'
+    AND object_deleted IS null
+GROUP BY 1,2,3,4;
+SQL
 }
 
 resource "snowflake_view_grant" "select_object_tags_grant" {
@@ -277,6 +277,11 @@ resource "snowflake_table" "streams" {
 }
 
 resource "snowflake_procedure" "update_objects" {
+    depends_on = [
+      snowflake_table.tasks,
+      snowflake_table.streams,
+      snowflake_schema.ground
+    ]
     database = "${snowflake_database.play.name}"
     schema = "${snowflake_schema.administration.name}"
     name = "UPDATE_OBJECTS"
@@ -357,13 +362,50 @@ EOT
 }
 
 ###############################################################
+# Normalize Procedure Names
+###############################################################
+
+resource "snowflake_function" "normalize_proc_names" {
+    depends_on = [
+      snowflake_schema.administration
+    ]
+
+    database = "${snowflake_database.play.name}"
+    schema = "${snowflake_schema.administration.name}"
+    name = "NORMALIZE_PROC_NAMES"
+
+    arguments {
+        name = "name"
+        type = "string"
+    }
+
+    arguments {
+        name = "source"
+        type = "string"
+    }
+
+    arguments {
+        name = "arguments"
+        type = "string"
+    }
+
+    return_type = "string"
+
+    language = "python"
+    runtime_version = "3.8"
+    handler = "main"
+    statement = file("./code/func_ normalize_proc_names.py")
+}
+
+###############################################################
 # View for determining object age
 ###############################################################
 resource "snowflake_view" "object_ages" {
     depends_on = [
         snowflake_schema.administration,
         snowflake_schema.ground,
-        snowflake_view.object_tags
+        snowflake_view.object_tags,
+        snowflake_function.normalize_proc_names
     ]
 
     database = "${snowflake_database.play.name}"
@@ -386,6 +428,12 @@ tbls AS (
         UPPER(REPLACE(objects.table_type, ' ', '_')) AS object_type,
         'TABLE' AS object_domain,
         tgs.domain AS tag_domain,
+        CASE
+            WHEN object_type = 'BASE_TABLE' THEN 'TABLE'
+            WHEN object_type in ('VIEW', 'MATERIALIZED_VIEW') THEN 'VIEW'
+            WHEN object_type in ('INTERNAL_NAMED', 'EXTERNAL_NAMED') THEN 'STAGE'
+            ELSE object_type
+        END AS type_for_sql,
         DATEDIFF(day, objects.created, CURRENT_DATE) AS days_since_creation,
         DATEDIFF(day, objects.last_altered, CURRENT_DATE) AS days_since_last_alteration,
         tgs.expiry_date AS expiry_date,
@@ -413,6 +461,12 @@ ext_tbls AS (
         'EXTERNAL_TABLE' AS object_type,
         'TABLE' AS object_domain,
         tgs.domain AS tag_domain,
+        CASE
+            WHEN object_type = 'BASE_TABLE' THEN 'TABLE'
+            WHEN object_type in ('VIEW', 'MATERIALIZED_VIEW') THEN 'VIEW'
+            WHEN object_type in ('INTERNAL_NAMED', 'EXTERNAL_NAMED') THEN 'STAGE'
+            ELSE object_type
+        END AS type_for_sql,
         DATEDIFF(day, objects.created, CURRENT_DATE) AS days_since_creation,
         DATEDIFF(day, objects.last_altered, CURRENT_DATE) AS days_since_last_alteration,
         tgs.expiry_date AS expiry_date,
@@ -440,6 +494,12 @@ pipes AS (
         'PIPE' AS object_type,
         'PIPE' AS object_domain,
         tgs.domain AS tag_domain,
+        CASE
+            WHEN object_type = 'BASE_TABLE' THEN 'TABLE'
+            WHEN object_type in ('VIEW', 'MATERIALIZED_VIEW') THEN 'VIEW'
+            WHEN object_type in ('INTERNAL_NAMED', 'EXTERNAL_NAMED') THEN 'STAGE'
+            ELSE object_type
+        END AS type_for_sql,
         DATEDIFF(day, objects.created, CURRENT_DATE) AS days_since_creation,
         DATEDIFF(day, objects.last_altered, CURRENT_DATE) AS days_since_last_alteration,
         tgs.expiry_date AS expiry_date,
@@ -459,33 +519,6 @@ pipes AS (
         AND objects.pipe_schema = '${snowflake_schema.ground.name}' 
         AND objects.pipe_schema != 'INFORMATION_SCHEMA'
 ),
-procedures AS (
-    SELECT
-        objects.procedure_catalog AS object_catalog,
-        objects.procedure_schema AS object_schema,
-        CONCAT(objects.procedure_name, objects.argument_signature, ':', objects.data_type) AS object_name,
-        'PROCEDURE' AS object_type,
-        'PROCEDURE' AS object_domain,
-        tgs.domain AS tag_domain,
-        DATEDIFF(day, objects.created, CURRENT_DATE) AS days_since_creation,
-        DATEDIFF(day, objects.last_altered, CURRENT_DATE) AS days_since_last_alteration,
-        tgs.expiry_date AS expiry_date,
-        objects.procedure_owner as object_owner
-    FROM
-        ${snowflake_database.play.name}.information_schema.procedures objects 
-    LEFT OUTER JOIN ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_view.object_tags.name} tgs 
-        ON tgs.object_database = objects.procedure_catalog
-        AND tgs.object_schema = objects.procedure_schema
-        AND tgs.object_name = CONCAT(objects.procedure_name, objects.argument_signature, ':', objects.data_type)
-    WHERE
-        (
-            tgs.domain = 'PROCEDURE'
-            OR tgs.domain IS NULL
-        )
-        AND objects.procedure_catalog = '${snowflake_database.play.name}' 
-        AND objects.procedure_schema = '${snowflake_schema.ground.name}' 
-        AND objects.procedure_schema != 'INFORMATION_SCHEMA'
-),
 stages AS (
     SELECT
         objects.stage_catalog AS object_catalog,
@@ -494,6 +527,12 @@ stages AS (
         UPPER(REPLACE(objects.stage_type, ' ', '_')) AS object_type,
         'STAGE' AS object_domain,
         tgs.domain AS tag_domain,
+        CASE
+            WHEN object_type = 'BASE_TABLE' THEN 'TABLE'
+            WHEN object_type in ('VIEW', 'MATERIALIZED_VIEW') THEN 'VIEW'
+            WHEN object_type in ('INTERNAL_NAMED', 'EXTERNAL_NAMED') THEN 'STAGE'
+            ELSE object_type
+        END AS type_for_sql,
         DATEDIFF(day, objects.created, CURRENT_DATE) AS days_since_creation,
         DATEDIFF(day, objects.last_altered, CURRENT_DATE) AS days_since_last_alteration,
         tgs.expiry_date AS expiry_date,
@@ -513,6 +552,48 @@ stages AS (
         AND objects.stage_schema = '${snowflake_schema.ground.name}' 
         AND objects.stage_schema != 'INFORMATION_SCHEMA'
 ),
+proc_tags AS (
+    SELECT
+        object_database,
+        object_schema,
+        NORMALIZE_PROC_NAMES(object_name, 'TAG_REFERENCES', '') AS object_name,
+        domain,
+        expiry_date
+    FROM
+        ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_view.object_tags.name}
+    WHERE
+        domain = 'PROCEDURE'
+        OR domain IS NULL
+),
+procedures AS (
+    SELECT
+        objects.procedure_catalog AS object_catalog,
+        objects.procedure_schema AS object_schema,
+        NORMALIZE_PROC_NAMES(objects.procedure_name, 'INFORMATION_SCHEMA', objects.argument_signature) AS object_name,
+        'PROCEDURE' AS object_type,
+        'PROCEDURE' AS object_domain,
+        tgs.domain AS tag_domain,
+        CASE
+            WHEN object_type = 'BASE_TABLE' THEN 'TABLE'
+            WHEN object_type in ('VIEW', 'MATERIALIZED_VIEW') THEN 'VIEW'
+            WHEN object_type in ('INTERNAL_NAMED', 'EXTERNAL_NAMED') THEN 'STAGE'
+            ELSE object_type
+        END AS type_for_sql,
+        DATEDIFF(day, objects.created, CURRENT_DATE) AS days_since_creation,
+        DATEDIFF(day, objects.last_altered, CURRENT_DATE) AS days_since_last_alteration,
+        tgs.expiry_date AS expiry_date,
+        objects.procedure_owner as object_owner
+    FROM
+        ${snowflake_database.play.name}.information_schema.procedures objects 
+    LEFT OUTER JOIN proc_tags tgs 
+        ON tgs.object_database = objects.procedure_catalog
+        AND tgs.object_schema = objects.procedure_schema
+        AND tgs.object_name = object_name
+    WHERE
+        objects.procedure_catalog = '${snowflake_database.play.name}' 
+        AND objects.procedure_schema = '${snowflake_schema.ground.name}' 
+        AND objects.procedure_schema != 'INFORMATION_SCHEMA'
+),
 streams AS (
     SELECT
         objects.database_name AS object_catalog,
@@ -521,6 +602,12 @@ streams AS (
         'STREAM' AS object_type,
         'STREAM' AS object_domain,
         tgs.domain AS tag_domain,
+        CASE
+            WHEN object_type = 'BASE_TABLE' THEN 'TABLE'
+            WHEN object_type in ('VIEW', 'MATERIALIZED_VIEW') THEN 'VIEW'
+            WHEN object_type in ('INTERNAL_NAMED', 'EXTERNAL_NAMED') THEN 'STAGE'
+            ELSE object_type
+        END AS type_for_sql,
         DATEDIFF(day, objects.created_on, CURRENT_DATE) AS days_since_creation,
         NULL AS days_since_last_alteration,
         tgs.expiry_date AS expiry_date,
@@ -548,6 +635,12 @@ tasks AS (
         'TASK' AS object_type,
         'TASK' AS object_domain,
         tgs.domain AS tag_domain,
+        CASE
+            WHEN object_type = 'BASE_TABLE' THEN 'TABLE'
+            WHEN object_type in ('VIEW', 'MATERIALIZED_VIEW') THEN 'VIEW'
+            WHEN object_type in ('INTERNAL_NAMED', 'EXTERNAL_NAMED') THEN 'STAGE'
+            ELSE object_type
+        END AS type_for_sql,
         DATEDIFF(day, objects.created_on, CURRENT_DATE) AS days_since_creation,
         DATEDIFF(day, objects.last_committed_on, CURRENT_DATE) AS days_since_last_alteration,
         tgs.expiry_date AS expiry_date,
@@ -573,15 +666,15 @@ SELECT * FROM ext_tbls
 UNION
 SELECT * FROM pipes
 UNION
-SELECT * FROM procedures
-UNION
 SELECT * FROM stages
+UNION
+SELECT * FROM procedures
 UNION
 SELECT * FROM streams
 UNION
 SELECT * FROM tasks
 ;
-    SQL
+SQL
 }
 
 resource "snowflake_view_grant" "select_object_ages_grant" {
@@ -658,7 +751,7 @@ resource "snowflake_procedure" "tidy_playground" {
     return_type = "VARCHAR(16777216)"
     execute_as = "OWNER"
 
-    statement = file("./tidy_playground.js")
+    statement = file("./code/proc_tidy_playground.js")
 }
 
 ###############################################################
@@ -686,7 +779,7 @@ resource "snowflake_task" "update_task_objects" {
 
     database = "${snowflake_database.play.name}"
     schema = "${snowflake_schema.administration.name}"
-    name = "PLAYGROUND_UPDATE_TASKS_OBJECTS_TASK"
+    name = "UPDATE_PLAY_GROUND_TASK_OBJECTS_TASK"
 
     warehouse = "${snowflake_warehouse.playground_admin_warehouse.name}"
     # Given the playground relies on SNOWFLAKE.ACCOUNT_USAGE which can be delayed by up to 3 hours,
@@ -700,17 +793,18 @@ resource "snowflake_task" "update_task_objects" {
 
 resource "snowflake_task" "update_stream_objects" {
     depends_on = [
-        snowflake_procedure.tidy_playground,
+        snowflake_task.update_task_objects,
+        snowflake_procedure.update_objects,
         snowflake_warehouse.playground_admin_warehouse
     ]
 
     database = "${snowflake_database.play.name}"
     schema = "${snowflake_schema.administration.name}"
-    name = "PLAYGROUND_UPDATE_STREAM_OBJECTS_TASK"
+    name = "UPDATE_PLAY_GROUND_STREAM_OBJECTS_TASK"
 
     warehouse = "${snowflake_warehouse.playground_admin_warehouse.name}"
 
-    after = "${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_task.update_task_objects.name}"
+    after = [snowflake_task.update_task_objects.name]
     sql_statement = "call ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_procedure.tidy_playground.name}('streams')"
 
     allow_overlapping_execution = false
@@ -719,7 +813,8 @@ resource "snowflake_task" "update_stream_objects" {
 
 resource "snowflake_task" "tidy" {
     depends_on = [
-        snowflake_procedure.tidy_playground,
+        snowflake_task.update_stream_objects,
+        snowflake_procedure.update_objects,
         snowflake_warehouse.playground_admin_warehouse
     ]
 
@@ -729,7 +824,7 @@ resource "snowflake_task" "tidy" {
 
     warehouse = "${snowflake_warehouse.playground_admin_warehouse.name}"
 
-    after = "${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_task.update_stream_objects.name}"
+    after = [snowflake_task.update_stream_objects.name]
     sql_statement = "call ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_procedure.tidy_playground.name}()"
 
     allow_overlapping_execution = false
