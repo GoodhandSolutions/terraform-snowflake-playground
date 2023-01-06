@@ -369,20 +369,12 @@ resource "snowflake_view" "object_ages" {
     database = "${snowflake_database.play.name}"
     schema = "${snowflake_schema.administration.name}"
     name = "OBJECT_AGES"
-    
-    // - stream | ~ ACCOUNT_USAGE #TODO: Only available via 'SHOW STREAMS'. Maybe get from tags?
-    // - task | ~ ACCOUNT_USAGE #TODO: Only available via 'SHOW TASKS'. Maybe get from tags?
 
-    # Populate the data from the 'show' commands into a table, and then use the table below.
-    
-    // - tags | ~ ACCOUNT_USAGE.TAGS  xxx can't tag a tag...
-    // - file format | INFO_SCHEMA xxx can't be tagged
-    // - function | INFO_SCHEMA xxx can't be tagged
-    // - masking policy | ~ ACCOUNT_USAGE.MASKING_POLICIES xxx can't be tagged
-    // - row access policy | ~ ACCOUNT_USAGE.ROW_ACCESS_POLICIES xxx can't be tagged
-    // - sequence | INFO_SCHEMA xxx can't be tagged
+    // This doesn't include the following objects, because they cannot be tagged:
+    // tags, file formats, functions, masking policies, row access policies, sequences
 
-    # You can't have views, materialized views, tables or ext tables with the same name, so you can join on these.
+    // You can't have views, materialized views, tables or ext tables with the same name.
+    // These objects can therefore all be treated as tables.
 
     statement = <<-SQL
 WITH
@@ -686,7 +678,46 @@ resource "snowflake_warehouse" "playground_admin_warehouse" {
     warehouse_type = "STANDARD"
 }
 
-resource "snowflake_task" "tidy_task" {
+resource "snowflake_task" "update_task_objects" {
+    depends_on = [
+        snowflake_procedure.update_objects,
+        snowflake_warehouse.playground_admin_warehouse
+    ]
+
+    database = "${snowflake_database.play.name}"
+    schema = "${snowflake_schema.administration.name}"
+    name = "PLAYGROUND_UPDATE_TASKS_OBJECTS_TASK"
+
+    warehouse = "${snowflake_warehouse.playground_admin_warehouse.name}"
+    # Given the playground relies on SNOWFLAKE.ACCOUNT_USAGE which can be delayed by up to 3 hours,
+    # running at 0300 means that even with delays to reading tags, the behaviour should be as expected.
+    schedule = "USING CRON 0 3 * * * UTC"
+    sql_statement = "call ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_procedure.update_objects.name}('tasks')"
+
+    allow_overlapping_execution = false
+    enabled = true
+}
+
+resource "snowflake_task" "update_stream_objects" {
+    depends_on = [
+        snowflake_procedure.tidy_playground,
+        snowflake_warehouse.playground_admin_warehouse
+    ]
+
+    database = "${snowflake_database.play.name}"
+    schema = "${snowflake_schema.administration.name}"
+    name = "PLAYGROUND_UPDATE_STREAM_OBJECTS_TASK"
+
+    warehouse = "${snowflake_warehouse.playground_admin_warehouse.name}"
+
+    after = "${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_task.update_task_objects.name}"
+    sql_statement = "call ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_procedure.tidy_playground.name}('streams')"
+
+    allow_overlapping_execution = false
+    enabled = true
+}
+
+resource "snowflake_task" "tidy" {
     depends_on = [
         snowflake_procedure.tidy_playground,
         snowflake_warehouse.playground_admin_warehouse
@@ -697,9 +728,8 @@ resource "snowflake_task" "tidy_task" {
     name = "PLAYGROUND_TIDY_TASK"
 
     warehouse = "${snowflake_warehouse.playground_admin_warehouse.name}"
-    # Given the playground relies on SNOWFLAKE.ACCOUNT_USAGE which can be delayed by up to 3 hours,
-    # running at 0300 means that even with delays to reading tags, the behaviour should be as expected.
-    schedule = "USING CRON 0 3 * * * UTC"
+
+    after = "${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_task.update_stream_objects.name}"
     sql_statement = "call ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_procedure.tidy_playground.name}()"
 
     allow_overlapping_execution = false
