@@ -807,7 +807,14 @@ BEGIN
         open cur;
         fetch cur into result;
 
-        log_record := '{"sql":"' || REPLACE(sql_cmd,'"', '\\"') || '","action":"DROP_' || REPLACE(record.sql_object_type, ' ', '_') || '","reason":"' || drop_reason || '","justification":{"age":"' || record.days_since_creation || '","days_since_last_alteration":' || record.days_since_last_alteration || ',"expiry_date":' || IFF(record.expiry_date IS NULL, 'null', '"' || record.expiry_date::varchar || '"') || '},"result":' || IFF(result IS NULL, 'null', '"' || result || '"') || '}';
+        log_record := '{"sql":"' || REPLACE(sql_cmd,'"', '\\"') || '",
+                        "action":"DROP_' || REPLACE(record.sql_object_type, ' ', '_') || '",
+                        "reason":"' || drop_reason || '",
+                        "justification":{
+                            "age":"' || record.days_since_creation || '",
+                            "days_since_last_alteration":' || record.days_since_last_alteration || ',
+                            "expiry_date":' || IFF(record.expiry_date IS NULL, 'null', '"' || record.expiry_date::varchar || '"') || '},
+                        "result":' || IFF(result IS NULL, 'null', '"' || result || '"') || '}';
 
         INSERT INTO ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_table.log_table.name} (event_time, record) SELECT CURRENT_TIMESTAMP(), PARSE_JSON(:log_record);
     END FOR;
