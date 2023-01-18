@@ -83,3 +83,8 @@ variable "max_object_age_without_tag" {
     type = number
     default = 31
 }
+
+variable "max_expiry_days" {
+    type = number
+    default = 90
+}

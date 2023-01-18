@@ -60,7 +60,7 @@ try {
     var date_plus_90 = sfdate.toISOString().split("T")[0];
     
     // -- Find all tags > 90 days in advanced and set to 90 days
-    sql = "SELET table_database, table_schema, table_name, table_type, TRY_TO_DATE(EXPIRY_DATE) AS EXPIRY_DATE FROM scratch.administration.table_ages " +
+    sql = "SELECT table_database, table_schema, table_name, table_type, TRY_TO_DATE(EXPIRY_DATE) AS EXPIRY_DATE FROM scratch.administration.table_ages " +
           "WHERE DATEDIFF(days, CURRENT_DATE(), expiry_date) > 90;";
     rs = snowflake.execute({sqlText: sql});
     

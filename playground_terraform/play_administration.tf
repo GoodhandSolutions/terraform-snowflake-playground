@@ -757,7 +757,7 @@ resource "snowflake_procedure" "tidy_playground" {
 
     statement = <<-SQL
 DECLARE
-    cs cursor for
+    expired_objects CURSOR FOR
         SELECT
             OBJECT_DATABASE,
             OBJECT_SCHEMA,
@@ -778,8 +778,9 @@ DECLARE
             ) OR (
                 EXPIRY_DATE < CURRENT_DATE()
             )
-        ORDER BY DAYS_SINCE_CREATION DESC
     ;
+
+    max_expiry_date DATE DEFAULT (SELECT DATEADD(day, ${var.max_expiry_days}, current_date())::DATE);
 
     drop_reason VARCHAR;
     log_record VARCHAR;
@@ -787,15 +788,20 @@ DECLARE
     result VARCHAR DEFAULT '';
     rs RESULTSET;
 BEGIN
-    OPEN cs;
+    OPEN expired_objects;
     
-    FOR record IN cs DO
+    // TODO: Procedures need to have their name, separate from their arguments...
+    // This means drop "my_proc"(), not drop "my_proc()"...
+
+    // Find all objects either >30 days old and not tagged, or where the expiry date tag as passed.
+    // Drop these objects.
+    FOR object IN expired_objects DO
         drop_reason := 'Expiry date for object has passed';
-        IF (record.expiry_date IS NULL) THEN
+        IF (object.expiry_date IS NULL) THEN
             drop_reason := 'Table older than ${var.max_object_age_without_tag} days, with no expiry date tag.';
         END IF;
 
-        sql_cmd := 'DROP ' || record.sql_object_type || ' "' || record.object_database || '"."' || record.object_schema || '"."' || record.object_name || '";';
+        sql_cmd := 'DROP ' || object.sql_object_type || ' "' || object.object_database || '"."' || object.object_schema || '"."' || object.object_name || '";';
 
         IF (dry_run) THEN
             rs := (SELECT NULL);
@@ -803,21 +809,64 @@ BEGIN
             rs := (EXECUTE IMMEDIATE :sql_cmd);
         END IF;
 
-        let cur cursor for rs;
-        open cur;
-        fetch cur into result;
+        LET cur CURSOR FOR rs;
+        OPEN cur;
+        FETCH cur INTO RESULT;
 
         log_record := '{"sql":"' || REPLACE(sql_cmd,'"', '\\"') || '",
-                        "action":"DROP_' || REPLACE(record.sql_object_type, ' ', '_') || '",
+                        "action":"DROP_' || REPLACE(object.sql_object_type, ' ', '_') || '",
                         "reason":"' || drop_reason || '",
                         "justification":{
-                            "age":"' || record.days_since_creation || '",
-                            "days_since_last_alteration":' || record.days_since_last_alteration || ',
-                            "expiry_date":' || IFF(record.expiry_date IS NULL, 'null', '"' || record.expiry_date::varchar || '"') || '},
+                            "age":"' || object.days_since_creation || '",
+                            "days_since_last_alteration":' || object.days_since_last_alteration || ',
+                            "expiry_date":' || IFF(object.expiry_date IS NULL, 'null', '"' || object.expiry_date::varchar || '"') || '},
                         "result":' || IFF(result IS NULL, 'null', '"' || result || '"') || '}';
 
         INSERT INTO ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_table.log_table.name} (event_time, record) SELECT CURRENT_TIMESTAMP(), PARSE_JSON(:log_record);
     END FOR;
+
+    // Find all tags > max allowed expiry_date, and set to max date
+    let illegal_expiry_dates CURSOR FOR 
+        SELECT
+            object_database,
+            object_schema,
+            object_name,
+            object_type,
+            sql_object_type,
+            expiry_date
+        FROM
+            ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_view.object_ages.name}
+        WHERE
+            expiry_date > DATEADD(day, ${var.max_expiry_days}, current_date())::DATE
+        ;
+
+    OPEN illegal_expiry_dates;
+
+    FOR object IN illegal_expiry_dates DO
+        sql_cmd := 'ALTER ' || object.sql_object_type || ' "' || object.object_database || '"."' || object.object_schema || '"."' || object.object_name || '" SET TAG ${var.expiry_date_tag_database}.${var.expiry_date_tag_schema}.${var.expiry_date_tag_name} = "' || max_expiry_date::varchar || '";';
+
+        IF (dry_run) THEN
+            rs := (SELECT NULL);
+        ELSE
+            rs := (EXECUTE IMMEDIATE :sql_cmd);
+        END IF;
+
+        LET cur1 CURSOR FOR rs;
+        OPEN cur1;
+        FETCH cur1 INTO RESULT;
+
+        log_record := '{"sql":"' || REPLACE(sql_cmd,'"', '\\"') || '",
+                        "action":"ALTER_' || REPLACE(object.sql_object_type, ' ', '_') || '_EXPIRY_DATE",
+                        "reason":"Expiry tag is > ${var.max_expiry_days} days in the future.",
+                        "justification":{
+                            "expiry_date":' || IFF(object.expiry_date IS NULL, 'null', '"' || object.expiry_date::varchar || '"') || '},
+                        "result":' || IFF(result IS NULL, 'null', '"' || result || '"') || '}';
+
+        INSERT INTO ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_table.log_table.name} (event_time, record) SELECT CURRENT_TIMESTAMP(), PARSE_JSON(:log_record);
+
+    END FOR;
+
+    return 'Done';
 END;
 SQL
 }
