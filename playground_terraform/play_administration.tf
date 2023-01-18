@@ -755,6 +755,18 @@ resource "snowflake_procedure" "tidy_playground" {
     }
     execute_as = "OWNER"
 
+    // Includes:
+        // ext tables, materialized views, pipes, procedures, stages, streams, tables, tasks, views
+
+    // Excludes (because they cannot be tagged):
+        // tags, file formats, functions, masking policies, row access policies, sequences
+    // Excludes (because they don't exist outside of a session):
+        // temp tables
+
+    // You can't have views, materialized views, tables or ext tables with the same name.
+    // These objects can therefore all be treated as tables.
+
+// TODO: Can we write a testing function for this?
     statement = <<-SQL
 DECLARE
     expired_objects CURSOR FOR
