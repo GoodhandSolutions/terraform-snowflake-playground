@@ -11,3 +11,4 @@
 ###############################################################
 
 data_retention_time = 0
+max_object_age_without_tag = 2
