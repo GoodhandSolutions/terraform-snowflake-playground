@@ -394,7 +394,7 @@ resource "snowflake_function" "normalize_proc_names" {
     language = "python"
     runtime_version = "3.8"
     handler = "main"
-    statement = file("./code/func_ normalize_proc_names.py")
+    statement = file("./code/func_normalize_proc_names.py")
 }
 
 ###############################################################
@@ -424,12 +424,12 @@ tbls AS (
     SELECT
         objects.table_catalog AS object_database,
         objects.table_schema AS object_schema,
-        objects.table_name AS object_name,
+        '"' || objects.table_name || '"' AS object_name,
         UPPER(REPLACE(objects.table_type, ' ', '_')) AS object_type,
         'TABLE' AS object_domain,
         tgs.domain AS tag_domain,
         CASE
-            WHEN object_type = 'BASE_TABLE' THEN 'TABLE'
+            WHEN object_type in ('BASE_TABLE', 'EXTERNAL_TABLE') THEN 'TABLE'
             WHEN object_type in ('VIEW', 'MATERIALIZED_VIEW') THEN 'VIEW'
             WHEN object_type in ('INTERNAL_NAMED', 'EXTERNAL_NAMED') THEN 'STAGE'
             ELSE object_type
@@ -457,12 +457,12 @@ ext_tbls AS (
     SELECT
         objects.table_catalog AS object_database,
         objects.table_schema AS object_schema,
-        objects.table_name AS object_name,
+        '"' || objects.table_name || '"' AS object_name,
         'EXTERNAL_TABLE' AS object_type,
         'TABLE' AS object_domain,
         tgs.domain AS tag_domain,
         CASE
-            WHEN object_type = 'BASE_TABLE' THEN 'TABLE'
+            WHEN object_type in ('BASE_TABLE', 'EXTERNAL_TABLE') THEN 'TABLE'
             WHEN object_type in ('VIEW', 'MATERIALIZED_VIEW') THEN 'VIEW'
             WHEN object_type in ('INTERNAL_NAMED', 'EXTERNAL_NAMED') THEN 'STAGE'
             ELSE object_type
@@ -490,12 +490,12 @@ pipes AS (
     SELECT
         objects.pipe_catalog AS object_catalog,
         objects.pipe_schema AS object_schema,
-        objects.pipe_name AS object_name,
+        '"' || objects.pipe_name || '"' AS object_name,
         'PIPE' AS object_type,
         'PIPE' AS object_domain,
         tgs.domain AS tag_domain,
         CASE
-            WHEN object_type = 'BASE_TABLE' THEN 'TABLE'
+            WHEN object_type in ('BASE_TABLE', 'EXTERNAL_TABLE') THEN 'TABLE'
             WHEN object_type in ('VIEW', 'MATERIALIZED_VIEW') THEN 'VIEW'
             WHEN object_type in ('INTERNAL_NAMED', 'EXTERNAL_NAMED') THEN 'STAGE'
             ELSE object_type
@@ -523,12 +523,12 @@ stages AS (
     SELECT
         objects.stage_catalog AS object_catalog,
         objects.stage_schema AS object_schema,
-        objects.stage_name AS object_name,
+        '"' || objects.stage_name || '"' AS object_name,
         UPPER(REPLACE(objects.stage_type, ' ', '_')) AS object_type,
         'STAGE' AS object_domain,
         tgs.domain AS tag_domain,
         CASE
-            WHEN object_type = 'BASE_TABLE' THEN 'TABLE'
+            WHEN object_type in ('BASE_TABLE', 'EXTERNAL_TABLE') THEN 'TABLE'
             WHEN object_type in ('VIEW', 'MATERIALIZED_VIEW') THEN 'VIEW'
             WHEN object_type in ('INTERNAL_NAMED', 'EXTERNAL_NAMED') THEN 'STAGE'
             ELSE object_type
@@ -574,7 +574,7 @@ procedures AS (
         'PROCEDURE' AS object_domain,
         tgs.domain AS tag_domain,
         CASE
-            WHEN object_type = 'BASE_TABLE' THEN 'TABLE'
+            WHEN object_type in ('BASE_TABLE', 'EXTERNAL_TABLE') THEN 'TABLE'
             WHEN object_type in ('VIEW', 'MATERIALIZED_VIEW') THEN 'VIEW'
             WHEN object_type in ('INTERNAL_NAMED', 'EXTERNAL_NAMED') THEN 'STAGE'
             ELSE object_type
@@ -598,12 +598,12 @@ streams AS (
     SELECT
         objects.database_name AS object_catalog,
         objects.schema_name AS object_schema,
-        objects.name AS object_name,
+        '"' || objects.name || '"' AS object_name,
         'STREAM' AS object_type,
         'STREAM' AS object_domain,
         tgs.domain AS tag_domain,
         CASE
-            WHEN object_type = 'BASE_TABLE' THEN 'TABLE'
+            WHEN object_type in ('BASE_TABLE', 'EXTERNAL_TABLE') THEN 'TABLE'
             WHEN object_type in ('VIEW', 'MATERIALIZED_VIEW') THEN 'VIEW'
             WHEN object_type in ('INTERNAL_NAMED', 'EXTERNAL_NAMED') THEN 'STAGE'
             ELSE object_type
@@ -631,12 +631,12 @@ tasks AS (
     SELECT
         objects.database_name AS object_catalog,
         objects.schema_name AS object_schema,
-        objects.name AS object_name,
+        '"' || objects.name || '"' AS object_name,
         'TASK' AS object_type,
         'TASK' AS object_domain,
         tgs.domain AS tag_domain,
         CASE
-            WHEN object_type = 'BASE_TABLE' THEN 'TABLE'
+            WHEN object_type in ('BASE_TABLE', 'EXTERNAL_TABLE') THEN 'TABLE'
             WHEN object_type in ('VIEW', 'MATERIALIZED_VIEW') THEN 'VIEW'
             WHEN object_type in ('INTERNAL_NAMED', 'EXTERNAL_NAMED') THEN 'STAGE'
             ELSE object_type
@@ -801,9 +801,6 @@ DECLARE
     rs RESULTSET;
 BEGIN
     OPEN expired_objects;
-    
-    // TODO: Procedures need to have their name, separate from their arguments...
-    // This means drop "my_proc"(), not drop "my_proc()"...
 
     // Find all objects either >30 days old and not tagged, or where the expiry date tag as passed.
     // Drop these objects.
@@ -813,7 +810,7 @@ BEGIN
             drop_reason := 'Table older than ${var.max_object_age_without_tag} days, with no expiry date tag.';
         END IF;
 
-        sql_cmd := 'DROP ' || object.sql_object_type || ' "' || object.object_database || '"."' || object.object_schema || '"."' || object.object_name || '";';
+        sql_cmd := 'DROP ' || object.sql_object_type || ' "' || object.object_database || '"."' || object.object_schema || '".' || object.object_name || ';';
 
         IF (dry_run) THEN
             rs := (SELECT NULL);
@@ -855,7 +852,7 @@ BEGIN
     OPEN illegal_expiry_dates;
 
     FOR object IN illegal_expiry_dates DO
-        sql_cmd := 'ALTER ' || object.sql_object_type || ' "' || object.object_database || '"."' || object.object_schema || '"."' || object.object_name || '" SET TAG ${var.expiry_date_tag_database}.${var.expiry_date_tag_schema}.${var.expiry_date_tag_name} = "' || max_expiry_date::varchar || '";';
+        sql_cmd := 'ALTER ' || object.sql_object_type || ' "' || object.object_database || '"."' || object.object_schema || '".' || object.object_name || ' SET TAG ${var.expiry_date_tag_database}.${var.expiry_date_tag_schema}.${var.expiry_date_tag_name} = "' || max_expiry_date::varchar || '";';
 
         IF (dry_run) THEN
             rs := (SELECT NULL);
