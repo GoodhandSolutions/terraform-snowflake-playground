@@ -1,3 +1,5 @@
+# TODO: Add tests for function.
+
 def simplify_argument_signature(arguments):
     full_args = arguments.split('(')[1][0:-1]
     

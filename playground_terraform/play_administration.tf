@@ -767,6 +767,8 @@ resource "snowflake_procedure" "tidy_playground" {
     // These objects can therefore all be treated as tables.
 
 // TODO: Can we write a testing function for this?
+// TODO: Are there any specific errors that we should be looking for?
+// https://docs.snowflake.com/en/developer-guide/snowflake-scripting/exceptions.html#handling-an-exception
     statement = <<-SQL
 DECLARE
     expired_objects CURSOR FOR
@@ -876,6 +878,22 @@ BEGIN
     END FOR;
 
     return 'Done';
+EXCEPTION
+    WHEN STATEMENT_ERROR THEN
+        RETURN OBJECT_CONSTRUCT('Error type', 'STATEMENT_ERROR',
+                                'SQLCODE', sqlcode,
+                                'SQLERRM', sqlerrm,
+                                'SQLSTATE', sqlstate);
+    WHEN EXPRESSION_ERROR THEN
+        RETURN OBJECT_CONSTRUCT('Error type', 'EXPRESSION_ERROR',
+                                'SQLCODE', sqlcode,
+                                'SQLERRM', sqlerrm,
+                                'SQLSTATE', sqlstate);
+    WHEN OTHER THEN
+        RETURN OBJECT_CONSTRUCT('Error type', 'OTHER_ERROR',
+                                'SQLCODE', sqlcode,
+                                'SQLERRM', sqlerrm,
+                                'SQLSTATE', sqlstate);
 END;
 SQL
 }
