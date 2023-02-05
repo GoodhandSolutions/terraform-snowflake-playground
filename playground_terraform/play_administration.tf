@@ -713,6 +713,11 @@ resource "snowflake_table" "log_table" {
     }
 
     column {
+        name = "RUN_ID"
+        type = "VARCHAR(16777216)"
+    }
+
+    column {
         name = "RECORD"
         type = "VARIANT"
     }
@@ -732,6 +737,58 @@ resource "snowflake_object_parameter" "log_table_data_retention" {
     key = "DATA_RETENTION_TIME_IN_DAYS"
     value = "31"
     object_type = "TABLE"
+}
+
+resource "snowflake_view" "log_view" {
+    depends_on = [
+      snowflake_schema.administration
+    ]
+
+    database = "${snowflake_database.play.name}"
+    schema = "${snowflake_schema.administration.name}"
+    name = "LOG_VIEW"
+
+    statement = <<-SQL
+SELECT
+    event_time,
+    run_id,
+    record:action::string AS action,
+    record:object_type::string AS object_type,
+    record:reason_code::string AS reason_code,
+    record:reason::string AS reason,
+    record:justification:age::number AS object_age,
+    record:justification:days_since_last_alteration::number AS days_since_last_object_alteration,
+    record:justification:expiry_date::date AS object_expiry_date,
+    record:result::string AS result
+FROM
+    ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_table.log_table.name}
+;
+SQL
+}
+
+resource "snowflake_view" "log_summary" {
+    depends_on = [
+      snowflake_schema.administration
+    ]
+
+    database = "${snowflake_database.play.name}"
+    schema = "${snowflake_schema.administration.name}"
+    name = "LOG_SUMMARY"
+
+    statement = <<-SQL
+SELECT
+    run_id,
+    action,
+    object_type,
+    reason_code,
+    result,
+    COUNT(*) AS count
+FROM
+    ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_view.log_view.name}
+GROUP BY
+    1,2,3,4,5
+;
+SQL
 }
 
 ###############################################################
@@ -769,6 +826,7 @@ resource "snowflake_procedure" "tidy_playground" {
 // TODO: Can we write a testing function for this?
 // TODO: Are there any specific errors that we should be looking for?
 // https://docs.snowflake.com/en/developer-guide/snowflake-scripting/exceptions.html#handling-an-exception
+
     statement = <<-SQL
 DECLARE
     expired_objects CURSOR FOR
@@ -796,6 +854,8 @@ DECLARE
 
     max_expiry_date DATE DEFAULT (SELECT DATEADD(day, ${var.max_expiry_days}, current_date())::DATE);
 
+    run_id VARCHAR DEFAULT (SELECT UUID_STRING());
+
     drop_reason VARCHAR;
     log_record VARCHAR;
     sql_cmd VARCHAR;
@@ -809,13 +869,13 @@ BEGIN
     FOR object IN expired_objects DO
         drop_reason := 'Expiry date for object has passed';
         IF (object.expiry_date IS NULL) THEN
-            drop_reason := 'Table older than ${var.max_object_age_without_tag} days, with no expiry date tag.';
+            drop_reason := 'Object older than ${var.max_object_age_without_tag} days, with no expiry date tag.';
         END IF;
 
         sql_cmd := 'DROP ' || object.sql_object_type || ' "' || object.object_database || '"."' || object.object_schema || '".' || object.object_name || ';';
 
         IF (dry_run) THEN
-            rs := (SELECT NULL);
+            rs := (SELECT 'DRY_RUN');
         ELSE
             rs := (EXECUTE IMMEDIATE :sql_cmd);
         END IF;
@@ -825,7 +885,9 @@ BEGIN
         FETCH cur INTO RESULT;
 
         log_record := '{"sql":"' || REPLACE(sql_cmd,'"', '\\"') || '",
-                        "action":"DROP_' || REPLACE(object.sql_object_type, ' ', '_') || '",
+                        "action":"DROP_OBJECT",
+                        "object_type":"' || object.object_type || '",
+                        "reason_code":"EXPIRED_OBJECT",
                         "reason":"' || drop_reason || '",
                         "justification":{
                             "age":"' || object.days_since_creation || '",
@@ -833,7 +895,7 @@ BEGIN
                             "expiry_date":' || IFF(object.expiry_date IS NULL, 'null', '"' || object.expiry_date::varchar || '"') || '},
                         "result":' || IFF(result IS NULL, 'null', '"' || result || '"') || '}';
 
-        INSERT INTO ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_table.log_table.name} (event_time, record) SELECT CURRENT_TIMESTAMP(), PARSE_JSON(:log_record);
+        INSERT INTO ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_table.log_table.name} (event_time, run_id, record) SELECT CURRENT_TIMESTAMP(), :run_id, PARSE_JSON(:log_record);
     END FOR;
 
     // Find all tags > max allowed expiry_date, and set to max date
@@ -857,7 +919,7 @@ BEGIN
         sql_cmd := 'ALTER ' || object.sql_object_type || ' "' || object.object_database || '"."' || object.object_schema || '".' || object.object_name || ' SET TAG ${var.expiry_date_tag_database}.${var.expiry_date_tag_schema}.${var.expiry_date_tag_name} = "' || max_expiry_date::varchar || '";';
 
         IF (dry_run) THEN
-            rs := (SELECT NULL);
+            rs := (SELECT 'DRY_RUN');
         ELSE
             rs := (EXECUTE IMMEDIATE :sql_cmd);
         END IF;
@@ -867,17 +929,19 @@ BEGIN
         FETCH cur1 INTO RESULT;
 
         log_record := '{"sql":"' || REPLACE(sql_cmd,'"', '\\"') || '",
-                        "action":"ALTER_' || REPLACE(object.sql_object_type, ' ', '_') || '_EXPIRY_DATE",
+                        "action":"ALTER_EXPIRY_DATE",
+                        "object_type":"' || object.object_type || '",
+                        "reason_code":"ILLEGAL_EXPIRY_DATE",
                         "reason":"Expiry tag is > ${var.max_expiry_days} days in the future.",
                         "justification":{
                             "expiry_date":' || IFF(object.expiry_date IS NULL, 'null', '"' || object.expiry_date::varchar || '"') || '},
                         "result":' || IFF(result IS NULL, 'null', '"' || result || '"') || '}';
 
-        INSERT INTO ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_table.log_table.name} (event_time, record) SELECT CURRENT_TIMESTAMP(), PARSE_JSON(:log_record);
+        INSERT INTO ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_table.log_table.name} (event_time, run_id, record) SELECT CURRENT_TIMESTAMP(), :run_id, PARSE_JSON(:log_record);
 
     END FOR;
 
-    return 'Done';
+    return 'Done. To view summary information, run: SELECT action, object_type, reason_code, result, count FROM ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_view.log_summary.name} WHERE run_id = \''|| :run_id ||'\';';
 EXCEPTION
     WHEN STATEMENT_ERROR THEN
         RETURN OBJECT_CONSTRUCT('Error type', 'STATEMENT_ERROR',
