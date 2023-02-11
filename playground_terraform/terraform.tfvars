@@ -4,7 +4,7 @@
 
 # snowflake_user = ""
 # snowflake_account = ""
-# snowflake_rsa_key_path = "/Users/james.goodhand/.ssh/snowflake_rsa_key.p8"
+# snowflake_rsa_key_path = ""
 
 ###############################################################
 # Playground Configuration Variables
