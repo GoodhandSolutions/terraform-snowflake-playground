@@ -823,10 +823,6 @@ resource "snowflake_procedure" "tidy_playground" {
     // You can't have views, materialized views, tables or ext tables with the same name.
     // These objects can therefore all be treated as tables.
 
-// TODO: Can we write a testing function for this?
-// TODO: Are there any specific errors that we should be looking for?
-// https://docs.snowflake.com/en/developer-guide/snowflake-scripting/exceptions.html#handling-an-exception
-
     statement = <<-SQL
 DECLARE
     expired_objects CURSOR FOR

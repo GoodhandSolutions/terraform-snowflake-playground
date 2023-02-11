@@ -52,7 +52,6 @@ variable "playground_object_allowed_duration_days" {
     default = 90
 }
 
-# TODO: Allow user to specify their own warehouse to use instead.
 variable "playground_warehouse_name" {
     type = string
     default = "playground_admin_warehouse"
@@ -68,7 +67,6 @@ variable "expiry_date_tag_database" {
     default = "PLAY"
 }
 
-# TODO: Allow user to specify their own tag to use instead.
 variable "expiry_date_tag_schema" {
     type = string
     default = "ADMINISTRATION"

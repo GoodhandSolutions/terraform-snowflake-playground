@@ -1,6 +1,3 @@
-# TODO: Add tests for function.
-# TODO: Add code to run tests in GitHub Workflow
-
 def simplify_argument_signature(arguments):
     full_args = arguments.split('(')[1][0:-1]
     
