@@ -88,3 +88,13 @@ variable "max_expiry_days" {
     type = number
     default = 90
 }
+
+variable "tasks_enabled" {
+    type = bool
+    default = true
+}
+
+variable "dry_run" {
+    type = bool
+    default = false
+}

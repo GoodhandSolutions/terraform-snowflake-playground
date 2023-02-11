@@ -996,7 +996,7 @@ resource "snowflake_task" "update_task_objects" {
     sql_statement = "call ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_procedure.update_objects.name}('tasks')"
 
     allow_overlapping_execution = false
-    enabled = true
+    enabled = var.tasks_enabled
 }
 
 resource "snowflake_task" "update_stream_objects" {
@@ -1013,10 +1013,10 @@ resource "snowflake_task" "update_stream_objects" {
     warehouse = "${snowflake_warehouse.playground_admin_warehouse.name}"
 
     after = [snowflake_task.update_task_objects.name]
-    sql_statement = "call ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_procedure.tidy_playground.name}('streams')"
+    sql_statement = "call ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_procedure.update_objects.name}('streams')"
 
     allow_overlapping_execution = false
-    enabled = true
+    enabled = var.tasks_enabled
 }
 
 resource "snowflake_task" "tidy" {
@@ -1033,8 +1033,8 @@ resource "snowflake_task" "tidy" {
     warehouse = "${snowflake_warehouse.playground_admin_warehouse.name}"
 
     after = [snowflake_task.update_stream_objects.name]
-    sql_statement = "call ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_procedure.tidy_playground.name}()"
+    sql_statement = "call ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_procedure.tidy_playground.name}(${var.dry_run})"
 
     allow_overlapping_execution = false
-    enabled = true
+    enabled = var.tasks_enabled
 }
