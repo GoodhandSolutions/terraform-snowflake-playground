@@ -1,4 +1,17 @@
 def simplify_argument_signature(arguments):
+    """Simplifies the full argument definition of a function, to only the argument types.
+    
+    When Snowflake provides the arguments for a function, it often provides the name and type of each argument.
+    However, when you need to reference the function for commands, you need the function, and then only the argument types, without the names.
+
+    Args:
+        arguments, string: containing the full arguments description, in the form:
+            (arg1 arg1_type, arg2 arg2_type)
+    
+    Returns:
+        string: simplified comma separated list of only the argument type of each argument, in the form:
+            arg1_type, arg2_type
+    """
     full_args = arguments.split('(')[1][0:-1]
     
     if len(full_args) < 1:
@@ -13,20 +26,24 @@ def simplify_argument_signature(arguments):
 
 
 def main(name, source, arguments):
-    """Snowflake provides the name of a procedure in different forms,
-    depending on where it is read from:
-    It could be :
+    """Normalize the Snowflake procedure definitions into a uniform type useful for running new commands.
+    
+    Snowflake provides the name of a procedure in different forms, depending on where it is read from:
         - `UPDATE_OBJECTS`, with `(OBJECT_TYPE VARCHAR)`, and `VARCHAR(16777216)` provided separately (INFORMATION_SCHEMA and ACCOUNT_USAGE)
         - `UPDATE_OBJECTS` with `UPDATE_OBJECTS(VARCHAR) RETURN VARCHAR` provided separately (SHOW PROCEDURES)
         - `UPDATE_OBJECTS(OBJECT_TYPE VARCHAR):VARCHAR(16777216)` (TAG_REFERENCES)
     
-    This function normalises all of these into the standard form:
-        `"UPDATE_OBJECTS"(VARCHAR)`
-    
     When calling procedure names as case-sensitive, the "" surround the proc name, but NOT the arguments:
-    This means drop "my_proc"(), not drop "my_proc()"...
-    
-    Which is the form required for any SQL statements operating on the procedure.
+    This means drop "my_proc"(), not drop "my_proc()". This is the form required for any SQL statements operating on the procedure.
+
+    Args:
+        name, string: The name of the procedure as provided by the source. 
+        source, string: Where the description (name / arguments) of the procedure have been sourced from.
+        arguments, string (optional): The arguments of the procedure as provided by the source.
+
+    Returns:
+        string: normalised description of the procedure in the form:
+            "UPDATE_OBJECTS"(VARCHAR)
     """
     if source in ['INFORMATION_SCHEMA', 'ACCOUNT_USAGE']:
         return f"\"{name}\"({simplify_argument_signature(arguments)})"
