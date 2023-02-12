@@ -21,11 +21,11 @@ def simplify_argument_signature(arguments):
     
     for arg in full_args.split(','):
             arg_types.append(arg.strip().split(' ')[1])
-            
+
     return ','.join(arg_types)
 
 
-def main(name, source, arguments):
+def normalize_procedure_name(name, source, arguments = None):
     """Normalize the Snowflake procedure definitions into a uniform type useful for running new commands.
     
     Snowflake provides the name of a procedure in different forms, depending on where it is read from:
@@ -42,7 +42,7 @@ def main(name, source, arguments):
         arguments, string (optional): The arguments of the procedure as provided by the source.
 
     Returns:
-        string: normalised description of the procedure in the form:
+        string: normalized description of the procedure in the form:
             "UPDATE_OBJECTS"(VARCHAR)
     """
     if source in ['INFORMATION_SCHEMA', 'ACCOUNT_USAGE']:
