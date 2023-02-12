@@ -1,6 +1,9 @@
 # Local Mac files
 .DS_Store
 
+# VSCode Workspace settings
+.vscode 
+
 # Local .terraform directories
 **/.terraform/*
 
