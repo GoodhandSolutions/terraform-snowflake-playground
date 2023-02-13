@@ -64,20 +64,10 @@ resource "snowflake_view" "object_tags" {
     schema = "${snowflake_schema.administration.name}"
     name = "OBJECT_TAGS"
 
-    statement = <<-SQL
-SELECT 
-    object_database,
-    object_schema,
-    object_name,
-    domain,
-    TRY_TO_DATE(MAX(DECODE(tag_name, 'EXPIRY_DATE', tag_value, NULL))::varchar) AS expiry_date
-FROM
-    snowflake.account_usage.tag_references
-WHERE tag_database = '${var.expiry_date_tag_database}'
-    AND tag_schema = '${var.expiry_date_tag_schema}'
-    AND object_deleted IS null
-GROUP BY 1,2,3,4;
-SQL
+    statement = templatefile("./code/sql_views/object_tags.sql", {
+        "expiry_date_tag_database" = "${var.expiry_date_tag_database}"
+        "expiry_date_tag_schema" = "${var.expiry_date_tag_schema}"
+    })
 }
 
 resource "snowflake_view_grant" "select_object_tags_grant" {
@@ -288,77 +278,17 @@ resource "snowflake_procedure" "update_objects" {
 
     language = "SQL"
     arguments {
-        name = "object_type"
-        type = "varchar"
+        name = "OBJECT_TYPE"
+        type = "VARCHAR"
     }
 
-    return_type = "varchar"
+    return_type = "VARCHAR(16777216)"
     execute_as = "OWNER"
-    statement = <<EOT
-DECLARE
-    invalid_object_type exception (-20002, 'Invalid Object Type');
-BEGIN
-    IF (UPPER(object_type) = 'TASKS') THEN
-
-        execute immediate 'TRUNCATE TABLE IF EXISTS ${snowflake_database.play.name}.${snowflake_schema.administration.name}.tasks';
-        execute immediate 'SHOW TASKS IN SCHEMA ${snowflake_database.play.name}.${snowflake_schema.ground.name}';
-        INSERT INTO ${snowflake_database.play.name}.${snowflake_schema.administration.name}.tasks (
-            SELECT 
-                "created_on" AS created_on,
-                "name" AS name,
-                "id" AS id,
-                "database_name" AS database_name,
-                "schema_name" AS schema_name,
-                "owner" AS owner,
-                "comment" AS comment,
-                "warehouse" AS warehouse,
-                "schedule" AS schedule,
-                "predecessors" AS predecessors,
-                "state" AS state,
-                "definition" AS definition,
-                "condition" AS condition,
-                "allow_overlapping_execution" AS allow_overlapping_execution,
-                "error_integration" AS error_integration,
-                "last_committed_on" AS last_committed_on,
-                "last_suspended_on" AS last_suspended_on
-            FROM
-                table(result_scan(last_query_id()))
-        );
-
-        return 'Updated ${snowflake_database.play.name}.${snowflake_schema.administration.name}.tasks to contain the latest list of tasks.';
-        
-    ELSEIF (UPPER(object_type) = 'STREAMS') THEN
-    
-        execute immediate 'TRUNCATE TABLE IF EXISTS ${snowflake_database.play.name}.${snowflake_schema.administration.name}.streams';
-        execute immediate 'SHOW STREAMS IN SCHEMA ${snowflake_database.play.name}.${snowflake_schema.ground.name}';
-        INSERT INTO ${snowflake_database.play.name}.${snowflake_schema.administration.name}.streams (
-            SELECT 
-                "created_on" AS created_on, 
-                "name" AS name,
-                "database_name" AS database_name,
-                "schema_name" AS schema_name,
-                "owner" AS owner,
-                "comment" AS comment,
-                "table_name" AS table_name,
-                "source_type" AS source_type,
-                "base_tables" AS base_tables,
-                "type" AS type,
-                "stale" AS stale,
-                "mode" AS mode,
-                "stale_after" AS stale_after,
-                "invalid_reason" AS invalid_reason
-            FROM
-                table(result_scan(last_query_id()))
-        );
-        
-        return 'Updated ${snowflake_database.play.name}.${snowflake_schema.administration.name}.STREAMS to contain the latest list of tasks.';
-        
-    ELSE
-        raise invalid_object_type;
-    END IF;
-END
-;
-EOT
+    statement = templatefile("./code/sql_procedures/update_objects.sql", {
+        "playground_db" = "${snowflake_database.play.name}"
+        "playground_schema" = "${snowflake_schema.ground.name}"
+        "playground_administration_schema" = "${snowflake_schema.administration.name}"
+    })
 }
 
 ###############################################################
@@ -376,25 +306,25 @@ resource "snowflake_function" "normalize_proc_names" {
 
     arguments {
         name = "name"
-        type = "string"
+        type = "VARCHAR"
     }
 
     arguments {
         name = "source"
-        type = "string"
+        type = "VARCHAR"
     }
 
     arguments {
         name = "arguments"
-        type = "string"
+        type = "VARCHAR"
     }
 
-    return_type = "string"
+    return_type = "VARCHAR"
 
     language = "python"
     runtime_version = "3.8"
     handler = "normalize_procedure_name"
-    statement = file("./code/func_normalize_proc_names.py")
+    statement = file("./code/python/func_normalize_proc_names.py")
 }
 
 ###############################################################
@@ -418,263 +348,12 @@ resource "snowflake_view" "object_ages" {
     // You can't have views, materialized views, tables or ext tables with the same name.
     // These objects can therefore all be treated as tables.
 
-    statement = <<-SQL
-WITH
-tbls AS (
-    SELECT
-        objects.table_catalog AS object_database,
-        objects.table_schema AS object_schema,
-        '"' || objects.table_name || '"' AS object_name,
-        UPPER(REPLACE(objects.table_type, ' ', '_')) AS object_type,
-        'TABLE' AS object_domain,
-        tgs.domain AS tag_domain,
-        CASE
-            WHEN object_type in ('BASE_TABLE', 'EXTERNAL_TABLE') THEN 'TABLE'
-            WHEN object_type in ('VIEW', 'MATERIALIZED_VIEW') THEN 'VIEW'
-            WHEN object_type in ('INTERNAL_NAMED', 'EXTERNAL_NAMED') THEN 'STAGE'
-            ELSE object_type
-        END AS sql_object_type,
-        DATEDIFF(day, objects.created, CURRENT_DATE) AS days_since_creation,
-        DATEDIFF(day, objects.last_altered, CURRENT_DATE) AS days_since_last_alteration,
-        TRY_TO_DATE(tgs.expiry_date) AS expiry_date,
-        objects.table_owner AS object_owner
-    FROM
-        ${snowflake_database.play.name}.information_schema.tables objects 
-    LEFT OUTER JOIN ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_view.object_tags.name} tgs 
-        ON tgs.object_database = objects.table_catalog
-        AND tgs.object_schema = objects.table_schema
-        AND tgs.object_name = objects.table_name
-    WHERE
-        (
-            tgs.domain = 'TABLE'
-            OR tgs.domain IS NULL
-        )
-        AND objects.table_catalog = '${snowflake_database.play.name}' 
-        AND objects.table_schema = 'GROUND' 
-        AND objects.table_schema != 'INFORMATION_SCHEMA'
-),
-ext_tbls AS (
-    SELECT
-        objects.table_catalog AS object_database,
-        objects.table_schema AS object_schema,
-        '"' || objects.table_name || '"' AS object_name,
-        'EXTERNAL_TABLE' AS object_type,
-        'TABLE' AS object_domain,
-        tgs.domain AS tag_domain,
-        CASE
-            WHEN object_type in ('BASE_TABLE', 'EXTERNAL_TABLE') THEN 'TABLE'
-            WHEN object_type in ('VIEW', 'MATERIALIZED_VIEW') THEN 'VIEW'
-            WHEN object_type in ('INTERNAL_NAMED', 'EXTERNAL_NAMED') THEN 'STAGE'
-            ELSE object_type
-        END AS sql_object_type,
-        DATEDIFF(day, objects.created, CURRENT_DATE) AS days_since_creation,
-        DATEDIFF(day, objects.last_altered, CURRENT_DATE) AS days_since_last_alteration,
-        TRY_TO_DATE(tgs.expiry_date) AS expiry_date,
-        objects.table_owner AS object_owner
-    FROM
-        ${snowflake_database.play.name}.information_schema.external_tables objects 
-    LEFT OUTER JOIN ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_view.object_tags.name} tgs 
-        ON tgs.object_database = objects.table_catalog
-        AND tgs.object_schema = objects.table_schema
-        AND tgs.object_name = objects.table_name
-    WHERE
-        (
-            tgs.domain = 'TABLE'
-            OR tgs.domain IS NULL
-        )
-        AND objects.table_catalog = '${snowflake_database.play.name}' 
-        AND objects.table_schema = '${snowflake_schema.ground.name}' 
-        AND objects.table_schema != 'INFORMATION_SCHEMA'
-),
-pipes AS (
-    SELECT
-        objects.pipe_catalog AS object_catalog,
-        objects.pipe_schema AS object_schema,
-        '"' || objects.pipe_name || '"' AS object_name,
-        'PIPE' AS object_type,
-        'PIPE' AS object_domain,
-        tgs.domain AS tag_domain,
-        CASE
-            WHEN object_type in ('BASE_TABLE', 'EXTERNAL_TABLE') THEN 'TABLE'
-            WHEN object_type in ('VIEW', 'MATERIALIZED_VIEW') THEN 'VIEW'
-            WHEN object_type in ('INTERNAL_NAMED', 'EXTERNAL_NAMED') THEN 'STAGE'
-            ELSE object_type
-        END AS sql_object_type,
-        DATEDIFF(day, objects.created, CURRENT_DATE) AS days_since_creation,
-        DATEDIFF(day, objects.last_altered, CURRENT_DATE) AS days_since_last_alteration,
-        TRY_TO_DATE(tgs.expiry_date) AS expiry_date,
-        objects.pipe_owner as object_owner
-    FROM
-        ${snowflake_database.play.name}.information_schema.pipes objects 
-    LEFT OUTER JOIN ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_view.object_tags.name} tgs 
-        ON tgs.object_database = objects.pipe_catalog
-        AND tgs.object_schema = objects.pipe_schema
-        AND tgs.object_name = objects.pipe_name
-    WHERE
-        (
-            tgs.domain = 'PIPE'
-            OR tgs.domain IS NULL
-        )
-        AND objects.pipe_catalog = '${snowflake_database.play.name}' 
-        AND objects.pipe_schema = '${snowflake_schema.ground.name}' 
-        AND objects.pipe_schema != 'INFORMATION_SCHEMA'
-),
-stages AS (
-    SELECT
-        objects.stage_catalog AS object_catalog,
-        objects.stage_schema AS object_schema,
-        '"' || objects.stage_name || '"' AS object_name,
-        UPPER(REPLACE(objects.stage_type, ' ', '_')) AS object_type,
-        'STAGE' AS object_domain,
-        tgs.domain AS tag_domain,
-        CASE
-            WHEN object_type in ('BASE_TABLE', 'EXTERNAL_TABLE') THEN 'TABLE'
-            WHEN object_type in ('VIEW', 'MATERIALIZED_VIEW') THEN 'VIEW'
-            WHEN object_type in ('INTERNAL_NAMED', 'EXTERNAL_NAMED') THEN 'STAGE'
-            ELSE object_type
-        END AS sql_object_type,
-        DATEDIFF(day, objects.created, CURRENT_DATE) AS days_since_creation,
-        DATEDIFF(day, objects.last_altered, CURRENT_DATE) AS days_since_last_alteration,
-        TRY_TO_DATE(tgs.expiry_date) AS expiry_date,
-        objects.stage_owner as object_owner
-    FROM
-        ${snowflake_database.play.name}.information_schema.stages objects 
-    LEFT OUTER JOIN ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_view.object_tags.name} tgs 
-        ON tgs.object_database = objects.stage_catalog
-        AND tgs.object_schema = objects.stage_schema
-        AND tgs.object_name = objects.stage_name
-    WHERE
-        (
-            tgs.domain = 'STAGE'
-            OR tgs.domain IS NULL
-        )
-        AND objects.stage_catalog = '${snowflake_database.play.name}' 
-        AND objects.stage_schema = '${snowflake_schema.ground.name}' 
-        AND objects.stage_schema != 'INFORMATION_SCHEMA'
-),
-proc_tags AS (
-    SELECT
-        object_database,
-        object_schema,
-        NORMALIZE_PROC_NAMES(object_name, 'TAG_REFERENCES', '') AS object_name,
-        domain,
-        expiry_date
-    FROM
-        ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_view.object_tags.name}
-    WHERE
-        domain = 'PROCEDURE'
-        OR domain IS NULL
-),
-procedures AS (
-    SELECT
-        objects.procedure_catalog AS object_catalog,
-        objects.procedure_schema AS object_schema,
-        NORMALIZE_PROC_NAMES(objects.procedure_name, 'INFORMATION_SCHEMA', objects.argument_signature) AS object_name,
-        'PROCEDURE' AS object_type,
-        'PROCEDURE' AS object_domain,
-        tgs.domain AS tag_domain,
-        CASE
-            WHEN object_type in ('BASE_TABLE', 'EXTERNAL_TABLE') THEN 'TABLE'
-            WHEN object_type in ('VIEW', 'MATERIALIZED_VIEW') THEN 'VIEW'
-            WHEN object_type in ('INTERNAL_NAMED', 'EXTERNAL_NAMED') THEN 'STAGE'
-            ELSE object_type
-        END AS sql_object_type,
-        DATEDIFF(day, objects.created, CURRENT_DATE) AS days_since_creation,
-        DATEDIFF(day, objects.last_altered, CURRENT_DATE) AS days_since_last_alteration,
-        TRY_TO_DATE(tgs.expiry_date) AS expiry_date,
-        objects.procedure_owner as object_owner
-    FROM
-        ${snowflake_database.play.name}.information_schema.procedures objects 
-    LEFT OUTER JOIN proc_tags tgs 
-        ON tgs.object_database = objects.procedure_catalog
-        AND tgs.object_schema = objects.procedure_schema
-        AND tgs.object_name = object_name
-    WHERE
-        objects.procedure_catalog = '${snowflake_database.play.name}' 
-        AND objects.procedure_schema = '${snowflake_schema.ground.name}' 
-        AND objects.procedure_schema != 'INFORMATION_SCHEMA'
-),
-streams AS (
-    SELECT
-        objects.database_name AS object_catalog,
-        objects.schema_name AS object_schema,
-        '"' || objects.name || '"' AS object_name,
-        'STREAM' AS object_type,
-        'STREAM' AS object_domain,
-        tgs.domain AS tag_domain,
-        CASE
-            WHEN object_type in ('BASE_TABLE', 'EXTERNAL_TABLE') THEN 'TABLE'
-            WHEN object_type in ('VIEW', 'MATERIALIZED_VIEW') THEN 'VIEW'
-            WHEN object_type in ('INTERNAL_NAMED', 'EXTERNAL_NAMED') THEN 'STAGE'
-            ELSE object_type
-        END AS sql_object_type,
-        DATEDIFF(day, objects.created_on, CURRENT_DATE) AS days_since_creation,
-        NULL AS days_since_last_alteration,
-        TRY_TO_DATE(tgs.expiry_date) AS expiry_date,
-        objects.owner as object_owner
-    FROM
-        ${snowflake_database.play.name}.${snowflake_schema.administration.name}.streams objects 
-    LEFT OUTER JOIN ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_view.object_tags.name} tgs 
-        ON tgs.object_database = objects.database_name
-        AND tgs.object_schema = objects.schema_name
-        AND tgs.object_name = objects.name
-    WHERE
-        (
-            tgs.domain = 'STREAM'
-            OR tgs.domain IS NULL
-        )
-        AND objects.database_name = '${snowflake_database.play.name}' 
-        AND objects.schema_name = '${snowflake_schema.ground.name}' 
-        AND objects.schema_name != 'INFORMATION_SCHEMA'
-),
-tasks AS (
-    SELECT
-        objects.database_name AS object_catalog,
-        objects.schema_name AS object_schema,
-        '"' || objects.name || '"' AS object_name,
-        'TASK' AS object_type,
-        'TASK' AS object_domain,
-        tgs.domain AS tag_domain,
-        CASE
-            WHEN object_type in ('BASE_TABLE', 'EXTERNAL_TABLE') THEN 'TABLE'
-            WHEN object_type in ('VIEW', 'MATERIALIZED_VIEW') THEN 'VIEW'
-            WHEN object_type in ('INTERNAL_NAMED', 'EXTERNAL_NAMED') THEN 'STAGE'
-            ELSE object_type
-        END AS sql_object_type,
-        DATEDIFF(day, objects.created_on, CURRENT_DATE) AS days_since_creation,
-        DATEDIFF(day, objects.last_committed_on, CURRENT_DATE) AS days_since_last_alteration,
-        TRY_TO_DATE(tgs.expiry_date) AS expiry_date,
-        objects.owner as object_owner
-    FROM
-        ${snowflake_database.play.name}.${snowflake_schema.administration.name}.tasks objects 
-    LEFT OUTER JOIN ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_view.object_tags.name} tgs 
-        ON tgs.object_database = objects.database_name
-        AND tgs.object_schema = objects.schema_name
-        AND tgs.object_name = objects.name
-    WHERE
-        (
-            tgs.domain = 'TASK'
-            OR tgs.domain IS NULL
-        )
-        AND objects.database_name = '${snowflake_database.play.name}' 
-        AND objects.schema_name = '${snowflake_schema.ground.name}' 
-        AND objects.schema_name != 'INFORMATION_SCHEMA'
-)
-SELECT * FROM tbls
-UNION
-SELECT * FROM ext_tbls
-UNION
-SELECT * FROM pipes
-UNION
-SELECT * FROM stages
-UNION
-SELECT * FROM procedures
-UNION
-SELECT * FROM streams
-UNION
-SELECT * FROM tasks
-;
-SQL
+    statement = templatefile("./code/sql_views/object_ages.sql", {
+        "playground_db_name" = "${snowflake_database.play.name}"
+        "object_tags_view_path" = "${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_view.object_tags.name}"
+        "playground_schema_name" = "${snowflake_schema.ground.name}"
+        "playground_administration_schema_name" = "${snowflake_schema.administration.name}"
+    })
 }
 
 resource "snowflake_view_grant" "select_object_ages_grant" {
@@ -713,13 +392,13 @@ resource "snowflake_table" "log_table" {
     }
 
     column {
-        name = "RUN_ID"
-        type = "VARCHAR(16777216)"
+        name = "RECORD"
+        type = "VARIANT"
     }
 
     column {
-        name = "RECORD"
-        type = "VARIANT"
+        name = "RUN_ID"
+        type = "VARCHAR(16777216)"
     }
 }
 
@@ -748,22 +427,9 @@ resource "snowflake_view" "log_view" {
     schema = "${snowflake_schema.administration.name}"
     name = "LOG_VIEW"
 
-    statement = <<-SQL
-SELECT
-    event_time,
-    run_id,
-    record:action::string AS action,
-    record:object_type::string AS object_type,
-    record:reason_code::string AS reason_code,
-    record:reason::string AS reason,
-    record:justification:age::number AS object_age,
-    record:justification:days_since_last_alteration::number AS days_since_last_object_alteration,
-    record:justification:expiry_date::date AS object_expiry_date,
-    record:result::string AS result
-FROM
-    ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_table.log_table.name}
-;
-SQL
+    statement = templatefile("./code/sql_views/log_view.sql", {
+        "tbl_path" = "${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_table.log_table.name}"
+    })
 }
 
 resource "snowflake_view" "log_summary" {
@@ -775,20 +441,9 @@ resource "snowflake_view" "log_summary" {
     schema = "${snowflake_schema.administration.name}"
     name = "LOG_SUMMARY"
 
-    statement = <<-SQL
-SELECT
-    run_id,
-    action,
-    object_type,
-    reason_code,
-    result,
-    COUNT(*) AS count
-FROM
-    ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_view.log_view.name}
-GROUP BY
-    1,2,3,4,5
-;
-SQL
+    statement = templatefile("./code/sql_views/log_summary.sql", {
+        "tbl_path" = "${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_view.log_view.name}"
+    })
 }
 
 ###############################################################
@@ -823,139 +478,17 @@ resource "snowflake_procedure" "tidy_playground" {
     // You can't have views, materialized views, tables or ext tables with the same name.
     // These objects can therefore all be treated as tables.
 
-    statement = <<-SQL
-DECLARE
-    expired_objects CURSOR FOR
-        SELECT
-            OBJECT_DATABASE,
-            OBJECT_SCHEMA,
-            OBJECT_NAME,
-            OBJECT_TYPE,
-            SQL_OBJECT_TYPE,
-            OBJECT_DOMAIN,
-            DAYS_SINCE_CREATION,
-            DAYS_SINCE_LAST_ALTERATION,
-            EXPIRY_DATE,
-            OBJECT_OWNER
-        FROM
-            ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_view.object_ages.name}
-        WHERE
-            (
-                DAYS_SINCE_CREATION > ${var.max_object_age_without_tag}
-                AND EXPIRY_DATE IS NULL
-            ) OR (
-                EXPIRY_DATE < CURRENT_DATE()
-            )
-    ;
-
-    max_expiry_date DATE DEFAULT (SELECT DATEADD(day, ${var.max_expiry_days}, current_date())::DATE);
-
-    run_id VARCHAR DEFAULT (SELECT UUID_STRING());
-
-    drop_reason VARCHAR;
-    log_record VARCHAR;
-    sql_cmd VARCHAR;
-    result VARCHAR DEFAULT '';
-    rs RESULTSET;
-BEGIN
-    OPEN expired_objects;
-
-    // Find all objects either >30 days old and not tagged, or where the expiry date tag as passed.
-    // Drop these objects.
-    FOR object IN expired_objects DO
-        drop_reason := 'Expiry date for object has passed';
-        IF (object.expiry_date IS NULL) THEN
-            drop_reason := 'Object older than ${var.max_object_age_without_tag} days, with no expiry date tag.';
-        END IF;
-
-        sql_cmd := 'DROP ' || object.sql_object_type || ' "' || object.object_database || '"."' || object.object_schema || '".' || object.object_name || ';';
-
-        IF (dry_run) THEN
-            rs := (SELECT 'DRY_RUN');
-        ELSE
-            rs := (EXECUTE IMMEDIATE :sql_cmd);
-        END IF;
-
-        LET cur CURSOR FOR rs;
-        OPEN cur;
-        FETCH cur INTO RESULT;
-
-        log_record := '{"sql":"' || REPLACE(sql_cmd,'"', '\\"') || '",
-                        "action":"DROP_OBJECT",
-                        "object_type":"' || object.object_type || '",
-                        "reason_code":"EXPIRED_OBJECT",
-                        "reason":"' || drop_reason || '",
-                        "justification":{
-                            "age":"' || object.days_since_creation || '",
-                            "days_since_last_alteration":' || object.days_since_last_alteration || ',
-                            "expiry_date":' || IFF(object.expiry_date IS NULL, 'null', '"' || object.expiry_date::varchar || '"') || '},
-                        "result":' || IFF(result IS NULL, 'null', '"' || result || '"') || '}';
-
-        INSERT INTO ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_table.log_table.name} (event_time, run_id, record) SELECT CURRENT_TIMESTAMP(), :run_id, PARSE_JSON(:log_record);
-    END FOR;
-
-    // Find all tags > max allowed expiry_date, and set to max date
-    let illegal_expiry_dates CURSOR FOR 
-        SELECT
-            object_database,
-            object_schema,
-            object_name,
-            object_type,
-            sql_object_type,
-            expiry_date
-        FROM
-            ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_view.object_ages.name}
-        WHERE
-            expiry_date > DATEADD(day, ${var.max_expiry_days}, current_date())::DATE
-        ;
-
-    OPEN illegal_expiry_dates;
-
-    FOR object IN illegal_expiry_dates DO
-        sql_cmd := 'ALTER ' || object.sql_object_type || ' "' || object.object_database || '"."' || object.object_schema || '".' || object.object_name || ' SET TAG ${var.expiry_date_tag_database}.${var.expiry_date_tag_schema}.${var.expiry_date_tag_name} = "' || max_expiry_date::varchar || '";';
-
-        IF (dry_run) THEN
-            rs := (SELECT 'DRY_RUN');
-        ELSE
-            rs := (EXECUTE IMMEDIATE :sql_cmd);
-        END IF;
-
-        LET cur1 CURSOR FOR rs;
-        OPEN cur1;
-        FETCH cur1 INTO RESULT;
-
-        log_record := '{"sql":"' || REPLACE(sql_cmd,'"', '\\"') || '",
-                        "action":"ALTER_EXPIRY_DATE",
-                        "object_type":"' || object.object_type || '",
-                        "reason_code":"ILLEGAL_EXPIRY_DATE",
-                        "reason":"Expiry tag is > ${var.max_expiry_days} days in the future.",
-                        "justification":{
-                            "expiry_date":' || IFF(object.expiry_date IS NULL, 'null', '"' || object.expiry_date::varchar || '"') || '},
-                        "result":' || IFF(result IS NULL, 'null', '"' || result || '"') || '}';
-
-        INSERT INTO ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_table.log_table.name} (event_time, run_id, record) SELECT CURRENT_TIMESTAMP(), :run_id, PARSE_JSON(:log_record);
-
-    END FOR;
-
-    return 'Done. To view summary information, run: SELECT action, object_type, reason_code, result, count FROM ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_view.log_summary.name} WHERE run_id = \''|| :run_id ||'\';';
-EXCEPTION
-    WHEN STATEMENT_ERROR THEN
-        RETURN OBJECT_CONSTRUCT('Error type', 'STATEMENT_ERROR',
-                                'SQLCODE', sqlcode,
-                                'SQLERRM', sqlerrm,
-                                'SQLSTATE', sqlstate);
-    WHEN EXPRESSION_ERROR THEN
-        RETURN OBJECT_CONSTRUCT('Error type', 'EXPRESSION_ERROR',
-                                'SQLCODE', sqlcode,
-                                'SQLERRM', sqlerrm,
-                                'SQLSTATE', sqlstate);
-    WHEN OTHER THEN
-        RETURN OBJECT_CONSTRUCT('Error type', 'OTHER_ERROR',
-                                'SQLCODE', sqlcode,
-                                'SQLERRM', sqlerrm,
-                                'SQLSTATE', sqlstate);
-END;
-SQL
+    statement = templatefile("./code/sql_procedures/tidy_playground.sql", {
+        "playground_db" = "${snowflake_database.play.name}"
+        "playground_schema" = "${snowflake_schema.ground.name}"
+        "playground_administration_schema" = "${snowflake_schema.administration.name}"
+        "object_ages_view_path" = "${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_view.object_ages.name}"
+        "log_summary_view_path" = "${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_view.log_summary.name}"
+        "log_table_path" = "${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_table.log_table.name}"
+        "max_expiry_days" = var.max_expiry_days
+        "max_object_age_without_tag" = var.max_object_age_without_tag
+        "expiry_date_tag_path" = "${var.expiry_date_tag_database}.${var.expiry_date_tag_schema}.${var.expiry_date_tag_name}"
+    })
 }
 
 ###############################################################
