@@ -278,11 +278,11 @@ resource "snowflake_procedure" "update_objects" {
 
     language = "SQL"
     arguments {
-        name = "object_type"
-        type = "varchar"
+        name = "OBJECT_TYPE"
+        type = "VARCHAR"
     }
 
-    return_type = "varchar"
+    return_type = "VARCHAR(16777216)"
     execute_as = "OWNER"
     statement = templatefile("./code/sql_procedures/update_objects.sql", {
         "playground_db" = "${snowflake_database.play.name}"
@@ -306,20 +306,20 @@ resource "snowflake_function" "normalize_proc_names" {
 
     arguments {
         name = "name"
-        type = "string"
+        type = "VARCHAR"
     }
 
     arguments {
         name = "source"
-        type = "string"
+        type = "VARCHAR"
     }
 
     arguments {
         name = "arguments"
-        type = "string"
+        type = "VARCHAR"
     }
 
-    return_type = "string"
+    return_type = "VARCHAR"
 
     language = "python"
     runtime_version = "3.8"
@@ -392,13 +392,13 @@ resource "snowflake_table" "log_table" {
     }
 
     column {
-        name = "RUN_ID"
-        type = "VARCHAR(16777216)"
+        name = "RECORD"
+        type = "VARIANT"
     }
 
     column {
-        name = "RECORD"
-        type = "VARIANT"
+        name = "RUN_ID"
+        type = "VARCHAR(16777216)"
     }
 }
 
