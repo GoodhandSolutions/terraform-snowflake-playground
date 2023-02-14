@@ -70,13 +70,13 @@ variable "max_expiry_days" {
 
 variable "tasks_enabled" {
     type = bool
-    default = true
+    default = false
     description = "Whether the playground tidying tasks are enabled or not."
 }
 
 variable "dry_run" {
     type = bool
-    default = false
+    default = true
     description = "Whether the playground tidying procedure should alter tags / drop objects, or just log its planned actions."
 }
 
