@@ -21,4 +21,3 @@ jobs:
             - name: Run tests
               working-directory: code/python
               run: poetry run pytest
-                

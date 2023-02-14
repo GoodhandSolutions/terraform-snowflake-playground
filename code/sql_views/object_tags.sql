@@ -1,4 +1,4 @@
-SELECT 
+SELECT
     object_database,
     object_schema,
     object_name,

@@ -22,3 +22,9 @@ repos:
         - '--args=--only=terraform_required_providers'
         - '--args=--only=terraform_standard_module_structure'
         - '--args=--only=terraform_workspace_remote'
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0  # Use the ref you want to point at
+    hooks:
+      - id: trailing-whitespace
+      - id: check-merge-conflict
+      - id: end-of-file-fixer

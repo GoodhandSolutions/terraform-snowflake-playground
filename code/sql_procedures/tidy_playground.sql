@@ -69,7 +69,7 @@ BEGIN
     END FOR;
 
     // Find all tags > max allowed expiry_date, and set to max date
-    let illegal_expiry_dates CURSOR FOR 
+    let illegal_expiry_dates CURSOR FOR
         SELECT
             object_database,
             object_schema,

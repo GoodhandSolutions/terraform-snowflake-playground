@@ -1,10 +1,10 @@
 import pytest
 from snapshottest.file import FileSnapshot
 
-from func_normalize_proc_names import * 
+from func_normalize_proc_names import *
 
 def test_simplify_argument_signature(snapshot):
-    
+
     test_arg_sig = '(ACCOUNT_NUMBER NUMBER, ACCOUNT_NAME STRING)'
 
     returned_signature = simplify_argument_signature(test_arg_sig)

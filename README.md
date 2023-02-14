@@ -27,7 +27,7 @@ For safety, the playground automation is disabled by default. Set the following 
 ```HCL
 module "playground" {
     source  = "jagoodhand/playground/snowflake"
-    
+
     dry_run = false
     tasks_enabled = true
 }
