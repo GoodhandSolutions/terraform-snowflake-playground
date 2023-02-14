@@ -521,7 +521,7 @@ resource "snowflake_task" "update_task_objects" {
     warehouse = "${snowflake_warehouse.playground_admin_warehouse.name}"
     # Given the playground relies on SNOWFLAKE.ACCOUNT_USAGE which can be delayed by up to 3 hours,
     # running at 0300 means that even with delays to reading tags, the behaviour should be as expected.
-    schedule = "USING CRON 0 3 * * * UTC"
+    schedule = var.task_cron_schedule
     sql_statement = "call ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_procedure.update_objects.name}('tasks')"
 
     allow_overlapping_execution = false
