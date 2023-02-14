@@ -22,6 +22,6 @@ provider "snowflake" {
 
 module "playground" {
   source  = "jagoodhand/playground/snowflake"
-  version = "0.0.1"
+  version = "0.0.2"
 }
 
