@@ -1,6 +1,10 @@
 name: Test Python Functions
 
-on: [push]
+on:
+  push:
+    paths:
+      - code/python
+      - .github/workflows
 
 jobs:
     Test-Normalizing-Procedure-Names:
