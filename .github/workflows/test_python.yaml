@@ -15,10 +15,10 @@ jobs:
             - name: Install poetry
               run: pip install poetry
             - name: Install testing environment
-              working-directory: playground_terraform/code/python
+              working-directory: code/python
               run: |
                 poetry install
             - name: Run tests
-              working-directory: playground_terraform/code/python
+              working-directory: code/python
               run: poetry run pytest
                 

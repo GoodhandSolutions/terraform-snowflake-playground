@@ -64,7 +64,7 @@ resource "snowflake_view" "object_tags" {
     schema = "${snowflake_schema.administration.name}"
     name = "OBJECT_TAGS"
 
-    statement = templatefile("./code/sql_views/object_tags.sql", {
+    statement = templatefile("${path.module}/code/sql_views/object_tags.sql", {
         "expiry_date_tag_database" = "${var.expiry_date_tag_database}"
         "expiry_date_tag_schema" = "${var.expiry_date_tag_schema}"
     })
@@ -284,7 +284,7 @@ resource "snowflake_procedure" "update_objects" {
 
     return_type = "VARCHAR(16777216)"
     execute_as = "OWNER"
-    statement = templatefile("./code/sql_procedures/update_objects.sql", {
+    statement = templatefile("${path.module}/code/sql_procedures/update_objects.sql", {
         "playground_db" = "${snowflake_database.play.name}"
         "playground_schema" = "${snowflake_schema.ground.name}"
         "playground_administration_schema" = "${snowflake_schema.administration.name}"
@@ -324,7 +324,7 @@ resource "snowflake_function" "normalize_proc_names" {
     language = "python"
     runtime_version = "3.8"
     handler = "normalize_procedure_name"
-    statement = file("./code/python/func_normalize_proc_names.py")
+    statement = file("${path.module}/code/python/func_normalize_proc_names.py")
 }
 
 ###############################################################
@@ -348,7 +348,7 @@ resource "snowflake_view" "object_ages" {
     // You can't have views, materialized views, tables or ext tables with the same name.
     // These objects can therefore all be treated as tables.
 
-    statement = templatefile("./code/sql_views/object_ages.sql", {
+    statement = templatefile("${path.module}/code/sql_views/object_ages.sql", {
         "playground_db_name" = "${snowflake_database.play.name}"
         "object_tags_view_path" = "${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_view.object_tags.name}"
         "playground_schema_name" = "${snowflake_schema.ground.name}"
@@ -427,7 +427,7 @@ resource "snowflake_view" "log_view" {
     schema = "${snowflake_schema.administration.name}"
     name = "LOG_VIEW"
 
-    statement = templatefile("./code/sql_views/log_view.sql", {
+    statement = templatefile("${path.module}/code/sql_views/log_view.sql", {
         "tbl_path" = "${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_table.log_table.name}"
     })
 }
@@ -441,7 +441,7 @@ resource "snowflake_view" "log_summary" {
     schema = "${snowflake_schema.administration.name}"
     name = "LOG_SUMMARY"
 
-    statement = templatefile("./code/sql_views/log_summary.sql", {
+    statement = templatefile("${path.module}/code/sql_views/log_summary.sql", {
         "tbl_path" = "${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_view.log_view.name}"
     })
 }
@@ -478,7 +478,7 @@ resource "snowflake_procedure" "tidy_playground" {
     // You can't have views, materialized views, tables or ext tables with the same name.
     // These objects can therefore all be treated as tables.
 
-    statement = templatefile("./code/sql_procedures/tidy_playground.sql", {
+    statement = templatefile("${path.module}/code/sql_procedures/tidy_playground.sql", {
         "playground_db" = "${snowflake_database.play.name}"
         "playground_schema" = "${snowflake_schema.ground.name}"
         "playground_administration_schema" = "${snowflake_schema.administration.name}"
@@ -521,7 +521,7 @@ resource "snowflake_task" "update_task_objects" {
     warehouse = "${snowflake_warehouse.playground_admin_warehouse.name}"
     # Given the playground relies on SNOWFLAKE.ACCOUNT_USAGE which can be delayed by up to 3 hours,
     # running at 0300 means that even with delays to reading tags, the behaviour should be as expected.
-    schedule = "USING CRON 0 3 * * * UTC"
+    schedule = var.task_cron_schedule
     sql_statement = "call ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_procedure.update_objects.name}('tasks')"
 
     allow_overlapping_execution = false
