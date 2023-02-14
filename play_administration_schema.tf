@@ -64,7 +64,7 @@ resource "snowflake_view" "object_tags" {
     schema = "${snowflake_schema.administration.name}"
     name = "OBJECT_TAGS"
 
-    statement = templatefile("./code/sql_views/object_tags.sql", {
+    statement = templatefile("${path.module}/code/sql_views/object_tags.sql", {
         "expiry_date_tag_database" = "${var.expiry_date_tag_database}"
         "expiry_date_tag_schema" = "${var.expiry_date_tag_schema}"
     })
@@ -284,7 +284,7 @@ resource "snowflake_procedure" "update_objects" {
 
     return_type = "VARCHAR(16777216)"
     execute_as = "OWNER"
-    statement = templatefile("./code/sql_procedures/update_objects.sql", {
+    statement = templatefile("${path.module}/code/sql_procedures/update_objects.sql", {
         "playground_db" = "${snowflake_database.play.name}"
         "playground_schema" = "${snowflake_schema.ground.name}"
         "playground_administration_schema" = "${snowflake_schema.administration.name}"
@@ -348,7 +348,7 @@ resource "snowflake_view" "object_ages" {
     // You can't have views, materialized views, tables or ext tables with the same name.
     // These objects can therefore all be treated as tables.
 
-    statement = templatefile("./code/sql_views/object_ages.sql", {
+    statement = templatefile("${path.module}/code/sql_views/object_ages.sql", {
         "playground_db_name" = "${snowflake_database.play.name}"
         "object_tags_view_path" = "${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_view.object_tags.name}"
         "playground_schema_name" = "${snowflake_schema.ground.name}"
@@ -427,7 +427,7 @@ resource "snowflake_view" "log_view" {
     schema = "${snowflake_schema.administration.name}"
     name = "LOG_VIEW"
 
-    statement = templatefile("./code/sql_views/log_view.sql", {
+    statement = templatefile("${path.module}/code/sql_views/log_view.sql", {
         "tbl_path" = "${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_table.log_table.name}"
     })
 }
@@ -441,7 +441,7 @@ resource "snowflake_view" "log_summary" {
     schema = "${snowflake_schema.administration.name}"
     name = "LOG_SUMMARY"
 
-    statement = templatefile("./code/sql_views/log_summary.sql", {
+    statement = templatefile("${path.module}/code/sql_views/log_summary.sql", {
         "tbl_path" = "${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_view.log_view.name}"
     })
 }
@@ -478,7 +478,7 @@ resource "snowflake_procedure" "tidy_playground" {
     // You can't have views, materialized views, tables or ext tables with the same name.
     // These objects can therefore all be treated as tables.
 
-    statement = templatefile("./code/sql_procedures/tidy_playground.sql", {
+    statement = templatefile("${path.module}/code/sql_procedures/tidy_playground.sql", {
         "playground_db" = "${snowflake_database.play.name}"
         "playground_schema" = "${snowflake_schema.ground.name}"
         "playground_administration_schema" = "${snowflake_schema.administration.name}"
