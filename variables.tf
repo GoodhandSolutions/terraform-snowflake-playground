@@ -4,6 +4,7 @@
 
 variable "data_retention_time" {
     type = number
+    default = 1
     description = "Snowflake Data Retention value for the Playground Schema."
 }
 
