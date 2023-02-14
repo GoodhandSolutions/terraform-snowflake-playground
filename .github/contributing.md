@@ -5,6 +5,10 @@ email, or any other method with the owners of this repository before making a ch
 
 Please note we have a code of conduct, please follow it in all your interactions with the project.
 
+## Setup
+
+This repository uses a pre-commit hook. Instructions on how to configure this can be found [here](https://github.com/antonbabenko/pre-commit-terraform#how-to-install).
+
 ## Pull Request Process
 
 1. Update the README.md with details of changes including example hcl blocks and [example files](./examples) if appropriate.
