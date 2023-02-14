@@ -7,12 +7,12 @@ Please note we have a code of conduct, please follow it in all your interactions
 
 ## Setup
 
-This repository uses a pre-commit hook. Instructions on how to configure this can be found [here](https://github.com/antonbabenko/pre-commit-terraform#how-to-install).
+This repository uses a pre-commit hooks. To configure these, follow steps #1 and #2 [here](https://github.com/antonbabenko/pre-commit-terraform#how-to-install). You will then be able to run `pre-commit run -a` as described below.
 
 ## Pull Request Process
 
 1. Update the README.md with details of changes including example hcl blocks and [example files](./examples) if appropriate.
-1. Run pre-commit hooks pre-commit run -a.
+1. Run pre-commit hooks `pre-commit run -a`.
 1. Once all outstanding comments and checklist items have been addressed, your contribution will be merged! Merged PRs will be included in the next release. The terraform-aws-vpc maintainers take care of updating the CHANGELOG as they merge.
 
 ## Checklists for contributions
