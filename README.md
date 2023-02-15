@@ -10,7 +10,6 @@ Terraform module for creating a 'Playground' environment within a Snowflake acco
 
 - Snowflake Enterprise Edition Account (or above)
   - The module requires object tagging, which is only available in Enterprise edition accounts (and above).
-<!-- - **(Recommended)** Disable Snowflake Secondary Roles -->
 
 ## Usage
 
@@ -82,7 +81,9 @@ This Playground primarily relies on Snowflake [Managed Access Schemas](https://d
 **Principles:**
 
 - Objects created in the Playground are only usable by the role that created them (or another role that inherits the creating role).
-- Additional grants in the Playground should not be created. If users need to share data between themselves or roles, the Playground is _not_ the place to do it.
+- Additional grants in the Playground **must not** be created. If users need to share data between themselves or roles, the Playground is _not_ the place to do it.
+
+The operation of these principles is illustrated in _Diagram 1_.
 
 ![playground_snowflake_permissions](./images/playground_snowflake_permissions.jpg)
 *Diagram 1 - Illustration of object access control within the Playground.*
@@ -97,8 +98,8 @@ This Playground primarily relies on Snowflake [Managed Access Schemas](https://d
 
 Snowflake have introduced the concept of [Secondary Roles](https://docs.snowflake.com/en/user-guide/security-access-control-overview#enforcement-model-the-primary-role-and-secondary-roles).
 
-![playground_secondary_roles_permissions](./images/playground_secondary_roles_permissions.jpg)\
-*Diagram 2 - Illustration of how Secondary Roles effect table access.*
+<!-- ![playground_secondary_roles_permissions](./images/playground_secondary_roles_permissions.jpg)
+*Diagram 2 - Illustration of how Secondary Roles effect table access.* -->
 
 Prior to Secondary Roles, even if `USER_1` had access to `ROLE_1` and `ROLE_2`, they would not be able to read data from `ROLE_2`, and write it so that `ROLE_1` then had access to it i.e. it wouldn’t be possible to do:
 
@@ -114,7 +115,7 @@ With Secondary Roles, **this is now possible**. This isn’t an issue unique to 
 - Tagging information utilised by the module may be up to 3 hours out of date. This is because it is only currently possible to bulk-source tag references in Snowflake from the `SNOWFLAKE.ACCOUNT_USAGE` schema. Thus it is recommended that the automation is only run once daily, and at least 3 hours after midnight to account for the delay.
 - Two users cannot create an object of the same name within the Playground.
 
-## Object Types
+### Object Types
 
 The logic within the Playground Automation will operate on the following Snowflake object types:
 
