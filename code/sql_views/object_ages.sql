@@ -18,8 +18,8 @@ tbls AS (
         TRY_TO_DATE(tgs.expiry_date) AS expiry_date,
         objects.table_owner AS object_owner
     FROM
-        ${playground_db_name}.information_schema.tables objects 
-    LEFT OUTER JOIN ${object_tags_view_path} tgs 
+        ${playground_db_name}.information_schema.tables objects
+    LEFT OUTER JOIN ${object_tags_view_path} tgs
         ON tgs.object_database = objects.table_catalog
         AND tgs.object_schema = objects.table_schema
         AND tgs.object_name = objects.table_name
@@ -28,8 +28,8 @@ tbls AS (
             tgs.domain = 'TABLE'
             OR tgs.domain IS NULL
         )
-        AND objects.table_catalog = '${playground_db_name}' 
-        AND objects.table_schema = 'GROUND' 
+        AND objects.table_catalog = '${playground_db_name}'
+        AND objects.table_schema = 'GROUND'
         AND objects.table_schema != 'INFORMATION_SCHEMA'
 ),
 ext_tbls AS (
@@ -51,8 +51,8 @@ ext_tbls AS (
         TRY_TO_DATE(tgs.expiry_date) AS expiry_date,
         objects.table_owner AS object_owner
     FROM
-        ${playground_db_name}.information_schema.external_tables objects 
-    LEFT OUTER JOIN ${object_tags_view_path} tgs 
+        ${playground_db_name}.information_schema.external_tables objects
+    LEFT OUTER JOIN ${object_tags_view_path} tgs
         ON tgs.object_database = objects.table_catalog
         AND tgs.object_schema = objects.table_schema
         AND tgs.object_name = objects.table_name
@@ -61,7 +61,7 @@ ext_tbls AS (
             tgs.domain = 'TABLE'
             OR tgs.domain IS NULL
         )
-        AND objects.table_catalog = '${playground_db_name}' 
+        AND objects.table_catalog = '${playground_db_name}'
         AND objects.table_schema = '${playground_schema_name}'
         AND objects.table_schema != 'INFORMATION_SCHEMA'
 ),
@@ -84,8 +84,8 @@ pipes AS (
         TRY_TO_DATE(tgs.expiry_date) AS expiry_date,
         objects.pipe_owner as object_owner
     FROM
-        ${playground_db_name}.information_schema.pipes objects 
-    LEFT OUTER JOIN ${object_tags_view_path} tgs 
+        ${playground_db_name}.information_schema.pipes objects
+    LEFT OUTER JOIN ${object_tags_view_path} tgs
         ON tgs.object_database = objects.pipe_catalog
         AND tgs.object_schema = objects.pipe_schema
         AND tgs.object_name = objects.pipe_name
@@ -94,7 +94,7 @@ pipes AS (
             tgs.domain = 'PIPE'
             OR tgs.domain IS NULL
         )
-        AND objects.pipe_catalog = '${playground_db_name}' 
+        AND objects.pipe_catalog = '${playground_db_name}'
         AND objects.pipe_schema = '${playground_schema_name}'
         AND objects.pipe_schema != 'INFORMATION_SCHEMA'
 ),
@@ -117,8 +117,8 @@ stages AS (
         TRY_TO_DATE(tgs.expiry_date) AS expiry_date,
         objects.stage_owner as object_owner
     FROM
-        ${playground_db_name}.information_schema.stages objects 
-    LEFT OUTER JOIN ${object_tags_view_path} tgs 
+        ${playground_db_name}.information_schema.stages objects
+    LEFT OUTER JOIN ${object_tags_view_path} tgs
         ON tgs.object_database = objects.stage_catalog
         AND tgs.object_schema = objects.stage_schema
         AND tgs.object_name = objects.stage_name
@@ -127,7 +127,7 @@ stages AS (
             tgs.domain = 'STAGE'
             OR tgs.domain IS NULL
         )
-        AND objects.stage_catalog = '${playground_db_name}' 
+        AND objects.stage_catalog = '${playground_db_name}'
         AND objects.stage_schema = '${playground_schema_name}'
         AND objects.stage_schema != 'INFORMATION_SCHEMA'
 ),
@@ -163,13 +163,13 @@ procedures AS (
         TRY_TO_DATE(tgs.expiry_date) AS expiry_date,
         objects.procedure_owner as object_owner
     FROM
-        ${playground_db_name}.information_schema.procedures objects 
-    LEFT OUTER JOIN proc_tags tgs 
+        ${playground_db_name}.information_schema.procedures objects
+    LEFT OUTER JOIN proc_tags tgs
         ON tgs.object_database = objects.procedure_catalog
         AND tgs.object_schema = objects.procedure_schema
         AND tgs.object_name = object_name
     WHERE
-        objects.procedure_catalog = '${playground_db_name}' 
+        objects.procedure_catalog = '${playground_db_name}'
         AND objects.procedure_schema = '${playground_schema_name}'
         AND objects.procedure_schema != 'INFORMATION_SCHEMA'
 ),
@@ -192,8 +192,8 @@ streams AS (
         TRY_TO_DATE(tgs.expiry_date) AS expiry_date,
         objects.owner as object_owner
     FROM
-        ${playground_db_name}.${playground_administration_schema_name}.streams objects 
-    LEFT OUTER JOIN ${object_tags_view_path} tgs 
+        ${playground_db_name}.${playground_administration_schema_name}.streams objects
+    LEFT OUTER JOIN ${object_tags_view_path} tgs
         ON tgs.object_database = objects.database_name
         AND tgs.object_schema = objects.schema_name
         AND tgs.object_name = objects.name
@@ -202,7 +202,7 @@ streams AS (
             tgs.domain = 'STREAM'
             OR tgs.domain IS NULL
         )
-        AND objects.database_name = '${playground_db_name}' 
+        AND objects.database_name = '${playground_db_name}'
         AND objects.schema_name = '${playground_schema_name}'
         AND objects.schema_name != 'INFORMATION_SCHEMA'
 ),
@@ -225,8 +225,8 @@ tasks AS (
         TRY_TO_DATE(tgs.expiry_date) AS expiry_date,
         objects.owner as object_owner
     FROM
-        ${playground_db_name}.${playground_administration_schema_name}.tasks objects 
-    LEFT OUTER JOIN ${object_tags_view_path} tgs 
+        ${playground_db_name}.${playground_administration_schema_name}.tasks objects
+    LEFT OUTER JOIN ${object_tags_view_path} tgs
         ON tgs.object_database = objects.database_name
         AND tgs.object_schema = objects.schema_name
         AND tgs.object_name = objects.name
@@ -235,7 +235,7 @@ tasks AS (
             tgs.domain = 'TASK'
             OR tgs.domain IS NULL
         )
-        AND objects.database_name = '${playground_db_name}' 
+        AND objects.database_name = '${playground_db_name}'
         AND objects.schema_name = '${playground_schema_name}'
         AND objects.schema_name != 'INFORMATION_SCHEMA'
 )

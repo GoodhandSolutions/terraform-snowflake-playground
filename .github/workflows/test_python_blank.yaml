@@ -1,0 +1,12 @@
+name: Test Python Functions
+on:
+  pull_request:
+    paths-ignore:
+      - code/python
+      - .github/workflows
+
+jobs:
+  Test-Normalizing-Procedure-Names:
+    runs-on: ubuntu-latest
+    steps:
+      - run: 'echo "No build required"'

@@ -2,7 +2,7 @@
 .DS_Store
 
 # VSCode Workspace settings
-.vscode 
+.vscode
 
 # Local .terraform directories
 **/.terraform/*

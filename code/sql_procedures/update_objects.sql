@@ -6,7 +6,7 @@ BEGIN
         execute immediate 'TRUNCATE TABLE IF EXISTS ${playground_db}.${playground_administration_schema}.tasks';
         execute immediate 'SHOW TASKS IN SCHEMA ${playground_db}.${playground_schema}';
         INSERT INTO ${playground_db}.${playground_administration_schema}.tasks (
-            SELECT 
+            SELECT
                 "created_on" AS created_on,
                 "name" AS name,
                 "id" AS id,
@@ -29,14 +29,14 @@ BEGIN
         );
 
         return 'Updated ${playground_db}.${playground_administration_schema}.tasks to contain the latest list of tasks.';
-        
+
     ELSEIF (UPPER(object_type) = 'STREAMS') THEN
-    
+
         execute immediate 'TRUNCATE TABLE IF EXISTS ${playground_db}.${playground_administration_schema}.streams';
         execute immediate 'SHOW STREAMS IN SCHEMA ${playground_db}.${playground_schema}';
         INSERT INTO ${playground_db}.${playground_administration_schema}.streams (
-            SELECT 
-                "created_on" AS created_on, 
+            SELECT
+                "created_on" AS created_on,
                 "name" AS name,
                 "database_name" AS database_name,
                 "schema_name" AS schema_name,
@@ -53,9 +53,9 @@ BEGIN
             FROM
                 table(result_scan(last_query_id()))
         );
-        
+
         return 'Updated ${playground_db}.${playground_administration_schema}.STREAMS to contain the latest list of tasks.';
-        
+
     ELSE
         raise invalid_object_type;
     END IF;
