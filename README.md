@@ -2,6 +2,17 @@
 
 Terraform module for creating a 'Playground' environment within a Snowflake account. For users, a Playground environment in Snowflake is a place where they know that they have write permissions, and are free to create and play without worry regarding permissions. For Administrators, it is an environment that they know will self-clean and don't need to manually manage.
 
+## Why should I create a Playground environment?
+
+If you experience any of the following in your Snowflake account, then a Playground environment may be useful:
+
+- Users creating objects for development, but then forgetting to delete them.
+  - You're then left with a schema with tens, hundreds, thousands of objects that you don't know what they are for. Is it safe to delete them, or are they something important? Maybe the person who created the object has left so you can't even ask them any more.
+- Users deploying Production systems to development environments - the continual clean-up of the Playground environment will discourage the deployment of production systems in the Playground.
+- Users (especially new users) not knowing where to create objects, because they aren't sure where they have permissions.
+
+Solving these issues manually can be incredibly time consuming and wasteful. A Playground area is a one-stop-shop to help resolve these issues, and give users a clear and safe space to experiment.
+
 ## Disclaimer
 
 > Use of this Terraform Module is done at your own risk. The authors have made their best efforts to ensure that it works as intended. You should test the playground before implementation to ensure that it works as you desire. The authors are not responsible for any loss of data that may occur as a result of your use or deployment of this module.
