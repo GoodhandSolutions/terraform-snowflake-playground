@@ -119,7 +119,7 @@ USE ROLE1;
 CREATE TABLE_1 AS SELECT * FROM TABLE_2;
 ```
 
-With Secondary Roles, **this is now possible**. This isn’t an issue unique to the Snowflake Playground. It can occur anywhere in your Snowflake account, but it is something to be aware of. A user could use this as a method of exposing sensitive data to other users who did not have permission to initially read it. You should therefore assume that any user can make data that they can read available to any other user whom they share a role with write permissions with.
+With Secondary Roles, **this is now possible**. `USER_2` would now have access to data that originally was only available to users of `ROLE_2`. This isn’t an issue unique to the Snowflake Playground. It can occur anywhere in your Snowflake account, but it is something to be aware of. A user could use this as a method of exposing sensitive data to other users who did not have permission to initially read it. You should therefore assume that any user can make data that they can read available to any other user whom they share a role with write permissions with.
 
 **If you wish to make this data transfer more difficult, it is recommended that you raise a Support Ticket with Snowflake to disable Secondary Roles on your Snowflake Account.**
 
