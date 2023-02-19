@@ -7,7 +7,7 @@ resource "snowflake_schema" "ground" {
   ]
 
   database = snowflake_database.play.name
-  name     = var.playground_schema_name
+  name     = var.playground.schema
 
   data_retention_days = var.data_retention_time
   is_transient        = false
