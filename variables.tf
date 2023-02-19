@@ -6,14 +6,16 @@ variable "playground" {
   type = object({
     database              = string
     schema                = string
+    is_transient          = bool
     administration_schema = string
   })
 
-  description = "Database, schema and administration schema names to use for the Playground."
+  description = "Database, schema and administration schema names to use for the Playground. Also provides control over whether the Playground schema should be transient."
 
   default = {
     database              = "PLAY"
     schema                = "GROUND"
+    is_transient          = true
     administration_schema = "ADMINISTRATION"
   }
 }

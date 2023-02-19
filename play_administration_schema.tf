@@ -269,6 +269,13 @@ resource "snowflake_table" "streams" {
 }
 
 resource "snowflake_procedure" "update_objects" {
+  /*
+  Procedure to get the latest list of STREAM / TASK objects in Snowflake via the 'SHOW' command.
+  These object types are not available in the INFORMATION_SCHEMA, and so wouldn't be up-to-date
+  otherwise, as would have to come from the delayed 'ACCOUNT_USAGE' schema.
+  }
+  */
+
   depends_on = [
     snowflake_table.tasks,
     snowflake_table.streams,

@@ -10,7 +10,7 @@ resource "snowflake_schema" "ground" {
   name     = var.playground.schema
 
   data_retention_days = var.data_retention_time
-  is_transient        = false
+  is_transient        = var.playground.is_transient
   is_managed          = true
 }
 

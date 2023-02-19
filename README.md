@@ -17,7 +17,7 @@ Solving these issues manually can be incredibly time consuming and wasteful. A P
 
 > Use of this Terraform Module is done at your own risk. The authors have made their best efforts to ensure that it works as intended. You should test the playground before implementation to ensure that it works as you desire. The authors are not responsible for any loss of data that may occur as a result of your use or deployment of this module.
 
-## Requirements
+## Prerequisites
 
 - Snowflake Enterprise Edition Account (or above)
   - The module requires object tagging, which is only available in Enterprise edition accounts (and above).
@@ -59,7 +59,6 @@ The Playground Automation (once enabled) ensures that the Playground doesn't bec
 
 > :information_source: **Note:** The automation will not stop someone from deploying a production system to the Playground if they were willing to continually update their tags.
 
-
 **Rule 1:** Any untagged object will be dropped after the number of days specified by the `max_object_age_without_tag` variable.
 
 **Rule 2:** Any object tagged with the `EXPIRY_DATE` tag, where the `EXPIRY_DATE` of the tag has passed, will be dropped.
@@ -92,9 +91,9 @@ This Playground primarily relies on Snowflake [Managed Access Schemas](https://d
 **Principles:**
 
 - Objects created in the Playground are only usable by the role that created them (or another role that inherits the creating role).
-- Additional grants in the Playground **must not** be created. If users need to share data between themselves or roles, the Playground is _not_ the place to do it.
+- Additional grants in the Playground **must not** be created. If users need to share data between themselves or roles, the Playground is *not* the place to do it.
 
-The operation of these principles is illustrated in _Diagram 1_.
+The operation of these principles is illustrated in *Diagram 1*.
 
 ![playground_snowflake_permissions](./images/playground_permissions.png)
 *Diagram 1 - Illustration of object access control within the Playground.*
@@ -239,7 +238,7 @@ No modules.
 | <a name="input_expiry_date_tag"></a> [expiry\_date\_tag](#input\_expiry\_date\_tag) | Details regarding the location and name of the EXPIRY\_DATE tag. If `create = true` then a new tag will be created, otherwise will assume a current tag exists with this name. If using an existing tag, you MUST grant 'APPLY' on this tag to the 'PUBLIC' role. This will not be done by the terraform module. | <pre>object({<br>    database = string<br>    schema   = string<br>    name     = string<br>    create   = bool<br>  })</pre> | <pre>{<br>  "create": true,<br>  "database": "PLAY",<br>  "name": "EXPIRY_DATE",<br>  "schema": "ADMINISTRATION"<br>}</pre> | no |
 | <a name="input_max_expiry_days"></a> [max\_expiry\_days](#input\_max\_expiry\_days) | Max number of days that an expiry date tag can be set in the future. If a tag is set beyond this value, then it will be reduced to the date defined by this number of days in the future. | `number` | `90` | no |
 | <a name="input_max_object_age_without_tag"></a> [max\_object\_age\_without\_tag](#input\_max\_object\_age\_without\_tag) | Max number of days to allow an object to exist in the playground without an expiry date before it is dropped. | `number` | `31` | no |
-| <a name="input_playground"></a> [playground](#input\_playground) | Database, schema and administration schema names to use for the Playground. | <pre>object({<br>    database              = string<br>    schema                = string<br>    administration_schema = string<br>  })</pre> | <pre>{<br>  "administration_schema": "ADMINISTRATION",<br>  "database": "PLAY",<br>  "schema": "GROUND"<br>}</pre> | no |
+| <a name="input_playground"></a> [playground](#input\_playground) | Database, schema and administration schema names to use for the Playground. Also provides control over whether the Playground schema should be transient. | <pre>object({<br>    database              = string<br>    schema                = string<br>    is_transient          = bool<br>    administration_schema = string<br>  })</pre> | <pre>{<br>  "administration_schema": "ADMINISTRATION",<br>  "database": "PLAY",<br>  "is_transient": true,<br>  "schema": "GROUND"<br>}</pre> | no |
 | <a name="input_playground_warehouse"></a> [playground\_warehouse](#input\_playground\_warehouse) | Warehouse to use for executing the playground automation functions. | <pre>object({<br>    name = string<br>    size = string<br>  })</pre> | <pre>{<br>  "name": "playground_admin_warehouse",<br>  "size": "xsmall"<br>}</pre> | no |
 | <a name="input_task_cron_schedule"></a> [task\_cron\_schedule](#input\_task\_cron\_schedule) | CRON schedule on which the playground tidying tasks should be executed. | `string` | `"USING CRON 0 3 * * * UTC"` | no |
 | <a name="input_tasks_enabled"></a> [tasks\_enabled](#input\_tasks\_enabled) | Whether the playground tidying tasks are enabled or not. | `bool` | `false` | no |
