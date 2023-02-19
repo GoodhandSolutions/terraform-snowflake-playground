@@ -2,6 +2,8 @@
 
 Terraform module for creating a 'Playground' environment within a Snowflake account. For users, a Playground environment in Snowflake is a place where they know that they have write permissions, and are free to create and play without worry regarding permissions. For Administrators, it is an environment that they know will self-clean and don't need to manually manage.
 
+See [architecture.md](./architecture.md) for details on the structure of the Playground.
+
 ## Why should I create a Playground environment?
 
 If you experience any of the following in your Snowflake account, then a Playground environment may be useful:
