@@ -27,4 +27,11 @@ module "playground" {
 
   tasks_enabled = true
   dry_run       = false
+
+  playground = {
+    database              = "PLAY"
+    schema                = "GROUND"
+    is_transient          = false
+    administration_schema = "ADMINISTRATION"
+  }
 }
