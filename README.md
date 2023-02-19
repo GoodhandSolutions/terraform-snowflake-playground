@@ -96,21 +96,21 @@ This Playground primarily relies on Snowflake [Managed Access Schemas](https://d
 
 The operation of these principles is illustrated in _Diagram 1_.
 
-![playground_snowflake_permissions](./images/playground_snowflake_permissions.jpg)
+![playground_snowflake_permissions](./images/playground_permissions.png)
 *Diagram 1 - Illustration of object access control within the Playground.*
 
 `ROLE_1` cannot 'see', or operate on `TABLE_2`, and `ROLE_2` cannot 'see' or operate on `TABLE_1`.
 
 `ROLE_1` / `ROLE_2` can only know about the existence of `TABLE_2` / `TABLE_1` through the `SNOWFLAKE.ACCOUNT_USAGE` information, or by attempting to create a table of the same name at which time an error will occur.
 
-> :exclamation: **WARNING**: Snowflake Secondary Roles can enable users to move data in unexpected ways. This is described below. You should be aware of this before deploying the Playground to your Snowflake account.
+> :exclamation: **WARNING**: Snowflake Secondary Roles can enable users to move data in unexpected ways. This is described below. You should be aware of this before deploying the Playground to your Snowflake account. Alternatively, you can request that Snowflake disables Secondary Roles in your account through a Support Ticket.
 
 ### Snowflake Secondary Role Implications
 
 Snowflake have introduced the concept of [Secondary Roles](https://docs.snowflake.com/en/user-guide/security-access-control-overview#enforcement-model-the-primary-role-and-secondary-roles).
 
-<!-- ![playground_secondary_roles_permissions](./images/playground_secondary_roles_permissions.jpg)
-*Diagram 2 - Illustration of how Secondary Roles effect table access.* -->
+![playground_secondary_roles_permissions](./images/secondary_roles_implications.png)
+*Diagram 2 - Illustration of how Secondary Roles effect table access.*
 
 Prior to Secondary Roles, even if `USER_1` had access to `ROLE_1` and `ROLE_2`, they would not be able to read data from `ROLE_2`, and write it so that `ROLE_1` then had access to it i.e. it wouldn’t be possible to do:
 
@@ -120,6 +120,8 @@ CREATE TABLE_1 AS SELECT * FROM TABLE_2;
 ```
 
 With Secondary Roles, **this is now possible**. This isn’t an issue unique to the Snowflake Playground. It can occur anywhere in your Snowflake account, but it is something to be aware of. A user could use this as a method of exposing sensitive data to other users who did not have permission to initially read it. You should therefore assume that any user can make data that they can read available to any other user whom they share a role with write permissions with.
+
+**If you wish to make this data transfer more difficult, it is recommended that you raise a Support Ticket with Snowflake to disable Secondary Roles on your Snowflake Account.**
 
 ## Limitations
 
