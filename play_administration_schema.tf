@@ -7,7 +7,7 @@ resource "snowflake_schema" "administration" {
   ]
 
   database = snowflake_database.play.name
-  name     = var.playground_admin_schema_name
+  name     = var.playground.administration_schema
 
   is_transient = false
   is_managed   = true
@@ -34,10 +34,11 @@ resource "snowflake_tag" "expiry_date_tag" {
   depends_on = [
     snowflake_schema.administration
   ]
+  count = var.expiry_date_tag.create ? 1 : 0
 
-  database = var.expiry_date_tag_database
-  schema   = var.expiry_date_tag_schema
-  name     = var.expiry_date_tag_name
+  database = var.expiry_date_tag.database
+  schema   = var.expiry_date_tag.schema
+  name     = var.expiry_date_tag.name
 
   comment = "Tag values must be in the form of YYYY-MM-DD."
 }
@@ -46,10 +47,11 @@ resource "snowflake_tag_grant" "expiry_date_apply_grant" {
   depends_on = [
     snowflake_tag.expiry_date_tag
   ]
+  count = var.expiry_date_tag.create ? 1 : 0
 
-  database_name = var.expiry_date_tag_database
-  schema_name   = var.expiry_date_tag_schema
-  tag_name      = var.expiry_date_tag_name
+  database_name = var.expiry_date_tag.database
+  schema_name   = var.expiry_date_tag.schema
+  tag_name      = var.expiry_date_tag.name
 
   roles     = ["PUBLIC"]
   privilege = "APPLY"
@@ -65,8 +67,8 @@ resource "snowflake_view" "object_tags" {
   name     = "OBJECT_TAGS"
 
   statement = templatefile("${path.module}/code/sql_views/object_tags.sql", {
-    "expiry_date_tag_database" = var.expiry_date_tag_database
-    "expiry_date_tag_schema"   = var.expiry_date_tag_schema
+    "expiry_date_tag_database" = var.expiry_date_tag.database
+    "expiry_date_tag_schema"   = var.expiry_date_tag.schema
   })
 }
 
@@ -491,7 +493,7 @@ resource "snowflake_procedure" "tidy_playground" {
     "log_table_path"                   = "${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_table.log_table.name}"
     "max_expiry_days"                  = var.max_expiry_days
     "max_object_age_without_tag"       = var.max_object_age_without_tag
-    "expiry_date_tag_path"             = "${var.expiry_date_tag_database}.${var.expiry_date_tag_schema}.${var.expiry_date_tag_name}"
+    "expiry_date_tag_path"             = "${var.expiry_date_tag.database}.${var.expiry_date_tag.schema}.${var.expiry_date_tag.name}"
   })
 }
 
@@ -499,8 +501,8 @@ resource "snowflake_procedure" "tidy_playground" {
 # Task to execute clean-up
 ###############################################################
 resource "snowflake_warehouse" "playground_admin_warehouse" {
-  name           = var.playground_warehouse_name
-  warehouse_size = var.playground_warehouse_size
+  name           = var.playground_warehouse.name
+  warehouse_size = var.playground_warehouse.size
 
   auto_resume         = true
   auto_suspend        = 59

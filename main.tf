@@ -2,7 +2,7 @@
 # Playground Database
 ###############################################################
 resource "snowflake_database" "play" {
-  name = var.playground_db_name
+  name = var.playground.database
 }
 
 resource "snowflake_database_grant" "play_usage" {

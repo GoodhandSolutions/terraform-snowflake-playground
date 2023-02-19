@@ -2,58 +2,58 @@
 # Playground Configuration Variables
 ###############################################################
 
+variable "playground" {
+  type = object({
+    database              = string
+    schema                = string
+    administration_schema = string
+  })
+
+  description = "Database, schema and administration schema names to use for the Playground."
+
+  default = {
+    database              = "PLAY"
+    schema                = "GROUND"
+    administration_schema = "ADMINISTRATION"
+  }
+}
+
+variable "playground_warehouse" {
+  type = object({
+    name = string
+    size = string
+  })
+
+  description = "Warehouse to use for executing the playground automation functions."
+
+  default = {
+    name = "playground_admin_warehouse"
+    size = "xsmall"
+  }
+}
+
+variable "expiry_date_tag" {
+  type = object({
+    database = string
+    schema   = string
+    name     = string
+    create   = bool
+  })
+
+  description = "Details regarding the location and name of the EXPIRY_DATE tag. If `create = true` then a new tag will be created, otherwise will assume a current tag exists with this name. If using an existing tag, you MUST grant 'APPLY' on this tag to the 'PUBLIC' role. This will not be done by the terraform module."
+
+  default = {
+    database = "PLAY"
+    schema   = "ADMINISTRATION"
+    name     = "EXPIRY_DATE"
+    create   = true
+  }
+}
+
 variable "data_retention_time" {
   type        = number
   default     = 1
   description = "Snowflake Data Retention value for the Playground Schema."
-}
-
-variable "playground_db_name" {
-  type        = string
-  default     = "PLAY"
-  description = "Name of the database that should be created to house the Playground environment. Must not be an existing database name."
-}
-
-variable "playground_schema_name" {
-  type        = string
-  default     = "GROUND"
-  description = "Name of the schema within the Playground Database where the Playground environment will exist."
-}
-
-variable "playground_admin_schema_name" {
-  type        = string
-  default     = "ADMINISTRATION"
-  description = "Name of the administrative schema within the Playground Database where the supporting objects for the playground will be created."
-}
-
-variable "playground_warehouse_name" {
-  type        = string
-  default     = "playground_admin_warehouse"
-  description = "Name of the warehouse that will be used to perform Playground activities. A new warehouse will be created to manage the playground activities."
-}
-
-variable "playground_warehouse_size" {
-  type        = string
-  default     = "xsmall"
-  description = "Size of the warehouse that will be used to support the Playground activities. XS should be apprioriate unless you have a particularly large account. In this case, you can look at the query times of the warehouse, and experiment with increasing the warehouse size."
-}
-
-variable "expiry_date_tag_database" {
-  type        = string
-  default     = "PLAY"
-  description = "Database where the expiry date tag utilised for the playground should be created."
-}
-
-variable "expiry_date_tag_schema" {
-  type        = string
-  default     = "ADMINISTRATION"
-  description = "Schema where the expiry date tag utilitsed for the playground should be created."
-}
-
-variable "expiry_date_tag_name" {
-  type        = string
-  default     = "EXPIRY_DATE"
-  description = "Name for the expiry date tag."
 }
 
 variable "max_object_age_without_tag" {
