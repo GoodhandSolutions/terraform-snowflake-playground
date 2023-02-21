@@ -86,14 +86,20 @@ The examples below describe the expected behaviour of the automation in each sce
 
 ## Security / Permissions
 
-This Playground primarily relies on Snowflake [Managed Access Schemas](https://docs.snowflake.com/en/user-guide/security-access-control-configure#creating-managed-access-schemas). Using Managed Access Schemas means that the users who created the object, are not able to control the grants on that object. In the Playground, only the `ACCOUNTADMIN` role is able to control the grants on objects.
+This Playground primarily relies on Snowflake [Managed Access Schemas](https://docs.snowflake.com/en/user-guide/security-access-control-configure#creating-managed-access-schemas). Using Managed Access Schemas means that the users who created the object, are not able to control the grants on that object. In the Playground, only the owning role (defined in the Snowflake Provider configuration), and those roles that inherit it are able to control the grants on objects.
 
-> :information_source: **Note:** Even though an `ACCOUNTADMIN` can manual grant permissions on objects in the Playground, they *should not*. If users are requesting manual grants, then they are likely abusing the purpose of the Playground environment.
+> :information_source: **Note:** Even though the roles with ownership on the Playground objects can manual grant permissions on objects in the Playground, they *should not*. If users are requesting manual grants, then they are likely abusing the purpose of the Playground environment.
 
 **Principles:**
 
 - Objects created in the Playground are only usable by the role that created them (or another role that inherits the creating role).
 - Additional grants in the Playground **must not** be created. If users need to share data between themselves or roles, the Playground is *not* the place to do it.
+- An administration role should be the owner of the Playground
+
+> It is recommended to use `SYSADMIN` or `ACCOUNTADMIN` as the owners of the Playground. Which of these is most appropriate is likely to depend on how you operate your account. There are pros and cons to using either:
+>
+> - Using `SYSADMIN` follows the principle of least privilege (any role below `SYSADMIN` is likely to not have the necessary permissions to properly manage the Playground, but this may vary depending on the configuration of your Snowflake account)
+> - Using `ACCOUNTADMIN` ensures that only top-level administrators can manage the Playground and the objects within it.
 
 The operation of these principles is illustrated in *Diagram 1*.
 
