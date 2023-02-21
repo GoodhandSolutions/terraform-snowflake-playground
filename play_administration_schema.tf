@@ -333,7 +333,7 @@ resource "snowflake_function" "normalize_proc_names" {
   language        = "python"
   runtime_version = "3.8"
   handler         = "normalize_procedure_name"
-  statement       = file("${path.module}/code/python/func_normalize_proc_names.py")
+  statement       = file("${path.module}/code/python/normalize_proc_names/normalize_proc_names/normalize_proc_names.py")
 }
 
 ###############################################################

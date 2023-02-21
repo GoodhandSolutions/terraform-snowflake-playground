@@ -1,7 +1,7 @@
 import pytest
 from snapshottest.file import FileSnapshot
 
-from func_normalize_proc_names import *
+from normalize_proc_names import simplify_argument_signature, normalize_procedure_name
 
 def test_simplify_argument_signature(snapshot):
 

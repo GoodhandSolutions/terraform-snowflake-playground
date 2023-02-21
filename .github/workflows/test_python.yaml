@@ -19,9 +19,9 @@ jobs:
             - name: Install poetry
               run: pip install poetry
             - name: Install testing environment
-              working-directory: code/python
+              working-directory: code/python/normalize_proc_names
               run: |
-                poetry install
+                poetry install --with test
             - name: Run tests
-              working-directory: code/python
-              run: poetry run pytest
+              working-directory: code/python/normalize_proc_names
+              run: poetry run python -m pytest
