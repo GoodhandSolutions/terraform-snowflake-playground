@@ -26,7 +26,7 @@ module "playground" {
   max_object_age_without_tag = 2
 
   tasks_enabled = true
-  dry_run       = false
+  dry_run       = true
 
   playground = {
     database              = "PLAY"

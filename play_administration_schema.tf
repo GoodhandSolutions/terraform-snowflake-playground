@@ -460,6 +460,29 @@ resource "snowflake_view" "log_summary" {
 ###############################################################
 # Clean-up Procedure
 ###############################################################
+
+resource "snowflake_procedure" "tidy_playground_python" {
+  depends_on = [
+    snowflake_table.log_table,
+    snowflake_view.object_ages,
+  ]
+
+  database = snowflake_database.play.name
+  schema   = snowflake_schema.administration.name
+  name     = "TIDY_PLAYGROUND_PYTHON"
+
+  language    = "PYTHON"
+  return_type = "VARCHAR(16777216)"
+
+  runtime_version = "3.8"
+  packages        = ["snowflake-snowpark-python"]
+  handler         = "main"
+
+  statement = templatefile("${path.module}/code/python/tidy_playground/tidy_playground/main.py", {
+    "playground_db" = snowflake_database.play.name
+  })
+}
+
 resource "snowflake_procedure" "tidy_playground" {
   depends_on = [
     snowflake_table.log_table,
