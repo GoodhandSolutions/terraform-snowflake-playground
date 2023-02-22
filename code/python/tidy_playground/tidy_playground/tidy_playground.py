@@ -38,15 +38,15 @@ def get_illegal_objects(session,
       )
   ;""").collect()
 
-def get_actions_from_status(object_details,
-                            expiry_date_tag,
-                            max_object_age_without_tag,
-                            max_expiry_days,
-                            max_expiry_tag_date):
+def determine_actions_from_status(object_details,
+                                  expiry_date_tag,
+                                  max_object_age_without_tag,
+                                  max_expiry_days,
+                                  max_expiry_tag_date):
   if object_details['STATUS'] == 'EXPIRED_OBJECT':
     reason = "Expiry date for object has passed"
     action = "DROP_OBJECT"
-    sql = f"DROP {object_details['OBJECT_TYPE']} \"{object_details['OBJECT_DATABASE']}\".\"{object_details['OBJECT_SCHEMA']}\".\"{object_details['OBJECT_NAME']}\";"
+    sql = f"DROP {object_details['OBJECT_TYPE']} \"{object_details['OBJECT_DATABASE']}\".\"{object_details['OBJECT_SCHEMA']}\".{object_details['OBJECT_NAME']};"
 
     return {
       'reason': reason,
@@ -56,7 +56,7 @@ def get_actions_from_status(object_details,
   elif object_details['STATUS'] == 'EXPIRED_TAG':
     reason = f"Object older than {max_object_age_without_tag} days without expiry tag."
     action = "DROP_OBJECT"
-    sql = f"DROP {object_details['OBJECT_TYPE']} \"{object_details['OBJECT_DATABASE']}\".\"{object_details['OBJECT_SCHEMA']}\".\"{object_details['OBJECT_NAME']}\";"
+    sql = f"DROP {object_details['OBJECT_TYPE']} \"{object_details['OBJECT_DATABASE']}\".\"{object_details['OBJECT_SCHEMA']}\".{object_details['OBJECT_NAME']};"
 
     return {
       'reason': reason,
@@ -66,7 +66,7 @@ def get_actions_from_status(object_details,
   elif object_details['STATUS'] == 'ILLEGAL_TAG':
     reason = f"Expiry tag date is more than {max_expiry_days} days from today."
     action = "ALTER_EXPIRY_DATE"
-    sql = f"ALTER {object_details['OBJECT_TYPE']} \"{object_details['OBJECT_DATABASE']}\".\"{object_details['OBJECT_SCHEMA']}\".\"{object_details['OBJECT_NAME']}\" SET TAG {expiry_date_tag} = '{max_expiry_tag_date}';"
+    sql = f"ALTER {object_details['OBJECT_TYPE']} \"{object_details['OBJECT_DATABASE']}\".\"{object_details['OBJECT_SCHEMA']}\".{object_details['OBJECT_NAME']} SET TAG {expiry_date_tag} = '{max_expiry_tag_date}';"
 
     return {
       'reason': reason,
@@ -76,36 +76,8 @@ def get_actions_from_status(object_details,
   else:
     raise ValueError(f"Unknown status: {object_details['STATUS']}")
 
-def main(session,
-         dry_run,
-         max_expiry_days,
-         expiry_date_tag,
-         max_object_age_without_tag,
-         object_ages_view_path,
-         log_table):
-  MAX_EXPIRY_DATE = calc_max_date(max_expiry_days)
-  MAX_EXPIRY_TAG_DATE = calc_max_date(days=max_object_age_without_tag)
-  RUN_ID = session.sql('SELECT UUID_STRING()').collect().iloc[0,0]
-
-  expired_objects = get_illegal_objects(session,
-                                          object_ages_view_path,
-                                          max_object_age_without_tag,
-                                          MAX_EXPIRY_TAG_DATE)
-
-  for _, row in expired_objects.iterrows():
-    actions = get_actions_from_status(row['STATUS'],
-                                      expiry_date_tag,
-                                      max_object_age_without_tag,
-                                      max_expiry_days,
-                                      MAX_EXPIRY_TAG_DATE)
-
-    if dry_run:
-      result = 'DRY_RUN'
-    else:
-      result_df = session.sql(actions['sql']).collect()
-      result = result_df.iloc[0,0]
-
-    log_record = {
+def generate_log_record(row, actions, result):
+  return {
       'sql': actions['sql'],
       'action': actions['action'],
       'object_type': row['OBJECT_TYPE'],
@@ -118,6 +90,39 @@ def main(session,
       },
       'result': result
     }
+
+def main(session,
+         dry_run,
+         max_expiry_days,
+         expiry_date_tag,
+         max_object_age_without_tag,
+         object_ages_view_path,
+         log_table):
+
+  MAX_EXPIRY_DATE = calc_max_date(max_expiry_days)
+  MAX_EXPIRY_TAG_DATE = calc_max_date(days=max_object_age_without_tag)
+  RUN_ID = session.sql('SELECT UUID_STRING()').collect().iloc[0,0]
+
+  illegal_objects = get_illegal_objects(session,
+                                          object_ages_view_path,
+                                          max_object_age_without_tag,
+                                          MAX_EXPIRY_TAG_DATE)
+
+  for _, row in illegal_objects.iterrows():
+    actions = determine_actions_from_status(row['STATUS'],
+                                      expiry_date_tag,
+                                      max_object_age_without_tag,
+                                      max_expiry_days,
+                                      MAX_EXPIRY_TAG_DATE)
+
+    if dry_run:
+      result = 'DRY_RUN'
+    else:
+      result_df = session.sql(actions['sql']).collect()
+      result = result_df.iloc[0,0]
+
+    log_record = generate_log_record(row, actions, result)
+
     session.sql(f"""INSERT INTO {log_table} (event_time, run_id, record)
                       SELECT CURRENT_TIMESTAMP(),
                       '{RUN_ID}',
