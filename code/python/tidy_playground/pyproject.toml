@@ -10,8 +10,9 @@ packages = [{include = "tidy_playground"}]
 python = "3.8.*"
 snowflake-snowpark-python = {extras = ["pandas"], version = "^1.1.0"}
 
-[tool.poetry.group.dev.dependencies]
+[tool.poetry.group.test.dependencies]
 pytest = "^7.2.1"
+snapshottest = "^0.6.0"
 
 [build-system]
 requires = ["poetry-core"]

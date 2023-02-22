@@ -478,8 +478,31 @@ resource "snowflake_procedure" "tidy_playground_python" {
   packages        = ["snowflake-snowpark-python"]
   handler         = "main"
 
-  statement = templatefile("${path.module}/code/python/tidy_playground/tidy_playground/main.py", {
-    "playground_db" = snowflake_database.play.name
+  arguments {
+    name = "MAX_EXPIRY_DAYS"
+    type = "NUMBER"
+  }
+
+  arguments {
+    name = "MAX_OBJECT_AGE_WITHOUT_TAG"
+    type = "NUMBER"
+  }
+
+  arguments {
+    name = "OBJECT_AGES_VIEW_PATH"
+    type = "STRING"
+  }
+
+  statement = templatefile("${path.module}/code/python/tidy_playground/tidy_playground/tidy_playground.py", {
+    "playground_db"                    = snowflake_database.play.name
+    "playground_schema"                = snowflake_schema.ground.name
+    "playground_administration_schema" = snowflake_schema.administration.name
+    "object_ages_view_path"            = "${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_view.object_ages.name}"
+    "log_summary_view_path"            = "${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_view.log_summary.name}"
+    "log_table_path"                   = "${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_table.log_table.name}"
+    "max_expiry_days"                  = var.max_expiry_days
+    "max_object_age_without_tag"       = var.max_object_age_without_tag
+    "expiry_date_tag_path"             = "${var.expiry_date_tag.database}.${var.expiry_date_tag.schema}.${var.expiry_date_tag.name}"
   })
 }
 
