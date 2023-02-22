@@ -2,7 +2,6 @@ import pytest
 import json
 import pandas as pd
 
-import csv
 from snapshottest.file import FileSnapshot
 
 from tidy_playground.tidy_playground import *

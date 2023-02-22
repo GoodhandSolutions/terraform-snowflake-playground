@@ -2,7 +2,7 @@ SELECT
     run_id,
     action,
     object_type,
-    reason_code,
+    status,
     result,
     COUNT(*) AS count
 FROM
