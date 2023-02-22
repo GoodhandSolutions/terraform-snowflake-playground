@@ -21,8 +21,15 @@ provider "snowflake" {
 }
 
 module "playground" {
-  source = "jagoodhand/playground/snowflake"
+  source = "../.." #"jagoodhand/playground/snowflake"
 
   tasks_enabled = true
   dry_run       = false
+
+  playground = {
+    database              = "PLAY"
+    schema                = "GROUND"
+    is_transient          = false
+    administration_schema = "ADMINISTRATION"
+  }
 }
