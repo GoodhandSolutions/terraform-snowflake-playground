@@ -91,14 +91,14 @@ def main(session,
                                           object_ages_view_path,
                                           max_object_age_without_tag,
                                           MAX_EXPIRY_TAG_DATE)
-    
+
   for _, row in expired_objects.iterrows():
     actions = get_actions_from_status(row['STATUS'],
                                       expiry_date_tag,
                                       max_object_age_without_tag,
                                       max_expiry_days,
                                       MAX_EXPIRY_TAG_DATE)
-    
+
     if dry_run:
       result = 'DRY_RUN'
     else:
@@ -122,7 +122,7 @@ def main(session,
                       SELECT CURRENT_TIMESTAMP(),
                       '{RUN_ID}',
                       PARSE_JSON('{json.dumps(log_record)}')'
-                ;""")    
+                ;""")
 
   return f"I ran a python command! Max expiry_date: {MAX_EXPIRY_DATE}, Max expiry tag date: {MAX_EXPIRY_TAG_DATE}."
 
