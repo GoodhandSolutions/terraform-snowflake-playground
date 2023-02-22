@@ -165,5 +165,3 @@ def main(session,
   return f"Success."
 
 # TODO: Catch permission denied errors.
-# TODO: Add doc strings / comments
-# TODO: Have properties in a table, rather than passing in as arguments?
