@@ -24,7 +24,11 @@ Solving these issues manually can be incredibly time consuming and wasteful. A P
 - Snowflake Enterprise Edition Account (or above)
   - The module requires object tagging, which is only available in Enterprise edition accounts (and above).
 
-## Usage
+## Getting Started
+
+The Snowflake Playground Terraform Module requires the [Snowflake Terraform Provider](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs).
+
+Once you have configured your Snowflake Provider, you can deploy this module using:
 
 ```HCL
 module "playground" {
@@ -54,6 +58,8 @@ module "playground" {
     tasks_enabled = true
 }
 ```
+
+For a basic deployment example, see this [main.tf](./examples/basic/main.tf), and its [README.md](./examples/basic/README.md).
 
 ## Playground Automation Logic
 
