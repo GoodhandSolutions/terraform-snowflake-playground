@@ -207,7 +207,6 @@ No modules.
 | [snowflake_function.normalize_proc_names](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/function) | resource |
 | [snowflake_object_parameter.log_table_data_retention](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/object_parameter) | resource |
 | [snowflake_procedure.tidy_playground](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/procedure) | resource |
-| [snowflake_procedure.tidy_playground_python](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/procedure) | resource |
 | [snowflake_procedure.update_objects](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/procedure) | resource |
 | [snowflake_schema.administration](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/schema) | resource |
 | [snowflake_schema.ground](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/schema) | resource |

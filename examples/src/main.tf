@@ -24,7 +24,7 @@ module "playground" {
   source = "../.." #"jagoodhand/playground/snowflake"
 
   tasks_enabled = true
-  dry_run       = false
+  dry_run       = true
 
   playground = {
     database              = "PLAY"

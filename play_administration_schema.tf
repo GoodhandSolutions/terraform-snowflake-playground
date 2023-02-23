@@ -461,7 +461,7 @@ resource "snowflake_view" "log_summary" {
 # Clean-up Procedure
 ###############################################################
 
-resource "snowflake_procedure" "tidy_playground_python" {
+resource "snowflake_procedure" "tidy_playground" {
   depends_on = [
     snowflake_table.log_table,
     snowflake_view.object_ages,
@@ -469,7 +469,7 @@ resource "snowflake_procedure" "tidy_playground_python" {
 
   database = snowflake_database.play.name
   schema   = snowflake_schema.administration.name
-  name     = "TIDY_PLAYGROUND_PYTHON"
+  name     = "TIDY_PLAYGROUND"
 
   language    = "PYTHON"
   return_type = "VARCHAR(16777216)"
@@ -479,33 +479,21 @@ resource "snowflake_procedure" "tidy_playground_python" {
   handler         = "main"
 
   arguments {
-    name = "MAX_EXPIRY_DAYS"
-    type = "NUMBER"
+    name = "DRY_RUN"
+    type = "BOOLEAN"
   }
-
-  arguments {
-    name = "MAX_OBJECT_AGE_WITHOUT_TAG"
-    type = "NUMBER"
-  }
-
-  arguments {
-    name = "OBJECT_AGES_VIEW_PATH"
-    type = "STRING"
-  }
+  execute_as = "OWNER"
 
   statement = templatefile("${path.module}/code/python/tidy_playground/tidy_playground/tidy_playground.py", {
-    "playground_db"                    = snowflake_database.play.name
-    "playground_schema"                = snowflake_schema.ground.name
-    "playground_administration_schema" = snowflake_schema.administration.name
-    "object_ages_view_path"            = "${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_view.object_ages.name}"
-    "log_summary_view_path"            = "${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_view.log_summary.name}"
-    "log_table_path"                   = "${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_table.log_table.name}"
-    "max_expiry_days"                  = var.max_expiry_days
-    "max_object_age_without_tag"       = var.max_object_age_without_tag
-    "expiry_date_tag_path"             = "${var.expiry_date_tag.database}.${var.expiry_date_tag.schema}.${var.expiry_date_tag.name}"
+    "object_ages_view_path"      = "${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_view.object_ages.name}"
+    "log_table_path"             = "${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_table.log_table.name}"
+    "max_expiry_days"            = var.max_expiry_days
+    "max_object_age_without_tag" = var.max_object_age_without_tag
+    "expiry_date_tag"            = "${var.expiry_date_tag.database}.${var.expiry_date_tag.schema}.${var.expiry_date_tag.name}"
   })
 }
 
+/*
 resource "snowflake_procedure" "tidy_playground" {
   depends_on = [
     snowflake_table.log_table,
@@ -524,7 +512,6 @@ resource "snowflake_procedure" "tidy_playground" {
   }
   execute_as = "OWNER"
 
-  /*
   Includes:
   ext tables, materialized views, pipes, procedures, stages, streams, tables, tasks, views
 
@@ -535,7 +522,6 @@ resource "snowflake_procedure" "tidy_playground" {
 
   You can't have views, materialized views, tables or ext tables with the same name.
   These objects can therefore all be treated as tables.
-  */
 
   statement = templatefile("${path.module}/code/sql_procedures/tidy_playground.sql", {
     "playground_db"                    = snowflake_database.play.name
@@ -549,6 +535,7 @@ resource "snowflake_procedure" "tidy_playground" {
     "expiry_date_tag_path"             = "${var.expiry_date_tag.database}.${var.expiry_date_tag.schema}.${var.expiry_date_tag.name}"
   })
 }
+*/
 
 ###############################################################
 # Task to execute clean-up
