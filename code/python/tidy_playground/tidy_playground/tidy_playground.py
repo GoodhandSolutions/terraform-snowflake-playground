@@ -2,6 +2,8 @@ import datetime
 import json
 import uuid
 
+from snowflake.snowpark.exceptions import SnowparkSQLException
+
 EXPIRY_DATE_TAG = "${expiry_date_tag}"
 MAX_EXPIRY_DAYS = ${max_expiry_days} # type: ignore
 MAX_OBJECT_AGE_WITHOUT_TAG = ${max_object_age_without_tag} # type: ignore
@@ -153,7 +155,16 @@ def main(session, is_dry_run):
     if is_dry_run:
       result = 'DRY_RUN'
     else:
-      result = session.sql(actions['sql']).collect()[0][0]
+      try:
+        result = session.sql(actions['sql']).collect()[0][0]
+      except SnowparkSQLException as e:
+        # SQL Access Control Error is code 1304.
+        # We want to note this in the log, but not fail the script, and continue to handle other objects.
+        if e.error_code == 1304:
+          result = 'PERMISSION_DENIED'
+          pass
+        else:
+          raise
 
     log_record = generate_log_record(row, actions, result)
 
@@ -163,5 +174,3 @@ def main(session, is_dry_run):
     session.sql(f"""INSERT INTO {LOG_TABLE_PATH} (event_time, run_id, record) SELECT CURRENT_TIMESTAMP(), '{RUN_ID}', PARSE_JSON('{log_record_json}')""").collect()
 
   return f"Success."
-
-# TODO: Catch permission denied errors.
