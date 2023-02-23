@@ -156,6 +156,8 @@ def main(session, is_dry_run):
       result = session.sql(actions['sql']).collect()[0][0]
 
     log_record = generate_log_record(row, actions, result)
+
+    # Need to escape single quotes and double-escape double quotes so they are handled properly by Snowflake SQL.
     log_record_json = json.dumps(log_record).replace("'", "\\\'").replace('\"', '\\"')
 
     session.sql(f"""INSERT INTO {LOG_TABLE_PATH} (event_time, run_id, record) SELECT CURRENT_TIMESTAMP(), '{RUN_ID}', PARSE_JSON('{log_record_json}')""").collect()
