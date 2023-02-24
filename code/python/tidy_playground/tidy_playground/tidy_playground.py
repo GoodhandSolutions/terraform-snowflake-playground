@@ -110,7 +110,7 @@ def generate_log_record(row, actions, result):
         'days_since_last_alteration': row.DAYS_SINCE_LAST_ALTERATION,
         'expiry_date': row.EXPIRY_DATE.strftime('%Y-%m-%d')
       },
-      'result': result
+      'cmd_result': result
     }
 
 def main(session, is_dry_run):
@@ -153,20 +153,20 @@ def main(session, is_dry_run):
                                             MAX_EXPIRY_TAG_DATE)
 
     if is_dry_run:
-      result = 'DRY_RUN'
+      cmd_result = 'DRY_RUN'
     else:
       try:
-        result = session.sql(actions['sql']).collect()[0][0]
+        cmd_result = session.sql(actions['sql']).collect()[0][0]
       except SnowparkSQLException as e:
         # SQL Access Control Error is code 1304.
         # We want to note this in the log, but not fail the script, and continue to handle other objects.
         if e.error_code == 1304:
-          result = 'PERMISSION_DENIED'
+          cmd_result = 'PERMISSION_DENIED'
           pass
         else:
           raise
 
-    log_record = generate_log_record(row, actions, result)
+    log_record = generate_log_record(row, actions, cmd_result)
 
     # Need to escape single quotes and double-escape double quotes so they are handled properly by Snowflake SQL.
     log_record_json = json.dumps(log_record).replace("'", "\\\'").replace('\"', '\\"')

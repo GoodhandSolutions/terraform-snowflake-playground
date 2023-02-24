@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "sql"
+version = "0.1.0"
+description = ""
+authors = ["James Goodhand <james.goodhand@hey.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "3.8.*"
+
+[tool.poetry.group.dev.dependencies]
+sqlfluff = "^1.4.5"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.sqlfluff.core]
+dialect = "snowflake"
+exclude_rules = "L026, L034"
+
+[tool.sqlfluff.rules]
+max_line_length = 100

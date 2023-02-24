@@ -1,6 +1,6 @@
 WITH
 tbls AS (
-    SELECT
+    SELECT --noqa: L034
         objects.table_catalog AS object_database,
         objects.table_schema AS object_schema,
         '"' || objects.table_name || '"' AS object_name,
@@ -8,23 +8,23 @@ tbls AS (
         'TABLE' AS object_domain,
         tgs.domain AS tag_domain,
         CASE
-            WHEN object_type in ('BASE_TABLE', 'EXTERNAL_TABLE') THEN 'TABLE'
-            WHEN object_type in ('VIEW', 'MATERIALIZED_VIEW') THEN 'VIEW'
-            WHEN object_type in ('INTERNAL_NAMED', 'EXTERNAL_NAMED') THEN 'STAGE'
+            WHEN object_type IN ('BASE_TABLE', 'EXTERNAL_TABLE') THEN 'TABLE'
+            WHEN object_type IN ('VIEW', 'MATERIALIZED_VIEW') THEN 'VIEW'
+            WHEN object_type IN ('INTERNAL_NAMED', 'EXTERNAL_NAMED') THEN 'STAGE'
             ELSE object_type
         END AS sql_object_type,
-        DATEDIFF(day, objects.created, CURRENT_DATE) AS days_since_creation,
-        DATEDIFF(day, objects.last_altered, CURRENT_DATE) AS days_since_last_alteration,
+        DATEDIFF(DAY, objects.created, CURRENT_DATE) AS days_since_creation,
+        DATEDIFF(DAY, objects.last_altered, CURRENT_DATE) AS days_since_last_alteration,
         TRY_TO_DATE(tgs.expiry_date) AS expiry_date,
         objects.table_owner AS object_owner
     FROM
         ${playground_db_name}.information_schema.tables objects
-    LEFT OUTER JOIN ${object_tags_view_path} tgs
-        ON tgs.object_database = objects.table_catalog
+    LEFT OUTER JOIN ${object_tags_view_path} tgs ON
+        tgs.object_database = objects.table_catalog
         AND tgs.object_schema = objects.table_schema
         AND tgs.object_name = objects.table_name
-    WHERE
-        (
+    WHERE -- noqa: L003
+        ( -- noqa: L003
             tgs.domain = 'TABLE'
             OR tgs.domain IS NULL
         )
@@ -32,6 +32,7 @@ tbls AS (
         AND objects.table_schema = 'GROUND'
         AND objects.table_schema != 'INFORMATION_SCHEMA'
 ),
+
 ext_tbls AS (
     SELECT
         objects.table_catalog AS object_database,
@@ -41,23 +42,23 @@ ext_tbls AS (
         'TABLE' AS object_domain,
         tgs.domain AS tag_domain,
         CASE
-            WHEN object_type in ('BASE_TABLE', 'EXTERNAL_TABLE') THEN 'TABLE'
-            WHEN object_type in ('VIEW', 'MATERIALIZED_VIEW') THEN 'VIEW'
-            WHEN object_type in ('INTERNAL_NAMED', 'EXTERNAL_NAMED') THEN 'STAGE'
+            WHEN object_type IN ('BASE_TABLE', 'EXTERNAL_TABLE') THEN 'TABLE'
+            WHEN object_type IN ('VIEW', 'MATERIALIZED_VIEW') THEN 'VIEW'
+            WHEN object_type IN ('INTERNAL_NAMED', 'EXTERNAL_NAMED') THEN 'STAGE'
             ELSE object_type
         END AS sql_object_type,
-        DATEDIFF(day, objects.created, CURRENT_DATE) AS days_since_creation,
-        DATEDIFF(day, objects.last_altered, CURRENT_DATE) AS days_since_last_alteration,
+        DATEDIFF(DAY, objects.created, CURRENT_DATE) AS days_since_creation,
+        DATEDIFF(DAY, objects.last_altered, CURRENT_DATE) AS days_since_last_alteration,
         TRY_TO_DATE(tgs.expiry_date) AS expiry_date,
         objects.table_owner AS object_owner
     FROM
         ${playground_db_name}.information_schema.external_tables objects
-    LEFT OUTER JOIN ${object_tags_view_path} tgs
-        ON tgs.object_database = objects.table_catalog
+    LEFT OUTER JOIN ${object_tags_view_path} tgs ON
+        tgs.object_database = objects.table_catalog
         AND tgs.object_schema = objects.table_schema
         AND tgs.object_name = objects.table_name
-    WHERE
-        (
+    WHERE -- noqa: L003
+        ( -- noqa: L003
             tgs.domain = 'TABLE'
             OR tgs.domain IS NULL
         )
@@ -65,6 +66,7 @@ ext_tbls AS (
         AND objects.table_schema = '${playground_schema_name}'
         AND objects.table_schema != 'INFORMATION_SCHEMA'
 ),
+
 pipes AS (
     SELECT
         objects.pipe_catalog AS object_catalog,
@@ -74,23 +76,23 @@ pipes AS (
         'PIPE' AS object_domain,
         tgs.domain AS tag_domain,
         CASE
-            WHEN object_type in ('BASE_TABLE', 'EXTERNAL_TABLE') THEN 'TABLE'
-            WHEN object_type in ('VIEW', 'MATERIALIZED_VIEW') THEN 'VIEW'
-            WHEN object_type in ('INTERNAL_NAMED', 'EXTERNAL_NAMED') THEN 'STAGE'
+            WHEN object_type IN ('BASE_TABLE', 'EXTERNAL_TABLE') THEN 'TABLE'
+            WHEN object_type IN ('VIEW', 'MATERIALIZED_VIEW') THEN 'VIEW'
+            WHEN object_type IN ('INTERNAL_NAMED', 'EXTERNAL_NAMED') THEN 'STAGE'
             ELSE object_type
         END AS sql_object_type,
-        DATEDIFF(day, objects.created, CURRENT_DATE) AS days_since_creation,
-        DATEDIFF(day, objects.last_altered, CURRENT_DATE) AS days_since_last_alteration,
+        DATEDIFF(DAY, objects.created, CURRENT_DATE) AS days_since_creation,
+        DATEDIFF(DAY, objects.last_altered, CURRENT_DATE) AS days_since_last_alteration,
         TRY_TO_DATE(tgs.expiry_date) AS expiry_date,
-        objects.pipe_owner as object_owner
+        objects.pipe_owner AS object_owner
     FROM
         ${playground_db_name}.information_schema.pipes objects
-    LEFT OUTER JOIN ${object_tags_view_path} tgs
-        ON tgs.object_database = objects.pipe_catalog
+    LEFT OUTER JOIN ${object_tags_view_path} tgs ON
+        tgs.object_database = objects.pipe_catalog
         AND tgs.object_schema = objects.pipe_schema
         AND tgs.object_name = objects.pipe_name
-    WHERE
-        (
+    WHERE -- noqa: L003
+        ( -- noqa: L003
             tgs.domain = 'PIPE'
             OR tgs.domain IS NULL
         )
@@ -98,6 +100,7 @@ pipes AS (
         AND objects.pipe_schema = '${playground_schema_name}'
         AND objects.pipe_schema != 'INFORMATION_SCHEMA'
 ),
+
 stages AS (
     SELECT
         objects.stage_catalog AS object_catalog,
@@ -107,23 +110,23 @@ stages AS (
         'STAGE' AS object_domain,
         tgs.domain AS tag_domain,
         CASE
-            WHEN object_type in ('BASE_TABLE', 'EXTERNAL_TABLE') THEN 'TABLE'
-            WHEN object_type in ('VIEW', 'MATERIALIZED_VIEW') THEN 'VIEW'
-            WHEN object_type in ('INTERNAL_NAMED', 'EXTERNAL_NAMED') THEN 'STAGE'
+            WHEN object_type IN ('BASE_TABLE', 'EXTERNAL_TABLE') THEN 'TABLE'
+            WHEN object_type IN ('VIEW', 'MATERIALIZED_VIEW') THEN 'VIEW'
+            WHEN object_type IN ('INTERNAL_NAMED', 'EXTERNAL_NAMED') THEN 'STAGE'
             ELSE object_type
         END AS sql_object_type,
-        DATEDIFF(day, objects.created, CURRENT_DATE) AS days_since_creation,
-        DATEDIFF(day, objects.last_altered, CURRENT_DATE) AS days_since_last_alteration,
+        DATEDIFF(DAY, objects.created, CURRENT_DATE) AS days_since_creation,
+        DATEDIFF(DAY, objects.last_altered, CURRENT_DATE) AS days_since_last_alteration,
         TRY_TO_DATE(tgs.expiry_date) AS expiry_date,
-        objects.stage_owner as object_owner
+        objects.stage_owner AS object_owner
     FROM
         ${playground_db_name}.information_schema.stages objects
-    LEFT OUTER JOIN ${object_tags_view_path} tgs
-        ON tgs.object_database = objects.stage_catalog
+    LEFT OUTER JOIN ${object_tags_view_path} tgs ON
+        tgs.object_database = objects.stage_catalog
         AND tgs.object_schema = objects.stage_schema
         AND tgs.object_name = objects.stage_name
-    WHERE
-        (
+    WHERE -- noqa: L003
+        ( -- noqa: L003
             tgs.domain = 'STAGE'
             OR tgs.domain IS NULL
         )
@@ -131,7 +134,9 @@ stages AS (
         AND objects.stage_schema = '${playground_schema_name}'
         AND objects.stage_schema != 'INFORMATION_SCHEMA'
 ),
-proc_tags AS (
+
+-- Ignore L045 (proc_tags is used in the next CTE)
+proc_tags AS ( --noqa: L045
     SELECT
         object_database,
         object_schema,
@@ -139,40 +144,45 @@ proc_tags AS (
         domain,
         expiry_date
     FROM
-        ${object_tags_view_path}
+        ${object_tags_view_path} --noqa
     WHERE
         domain = 'PROCEDURE'
         OR domain IS NULL
 ),
+
 procedures AS (
     SELECT
         objects.procedure_catalog AS object_catalog,
         objects.procedure_schema AS object_schema,
-        NORMALIZE_PROC_NAMES(objects.procedure_name, 'INFORMATION_SCHEMA', objects.argument_signature) AS object_name,
+        NORMALIZE_PROC_NAMES(
+            objects.procedure_name,
+            'INFORMATION_SCHEMA',
+            objects.argument_signature) AS object_name,
         'PROCEDURE' AS object_type,
         'PROCEDURE' AS object_domain,
         tgs.domain AS tag_domain,
         CASE
-            WHEN object_type in ('BASE_TABLE', 'EXTERNAL_TABLE') THEN 'TABLE'
-            WHEN object_type in ('VIEW', 'MATERIALIZED_VIEW') THEN 'VIEW'
-            WHEN object_type in ('INTERNAL_NAMED', 'EXTERNAL_NAMED') THEN 'STAGE'
+            WHEN object_type IN ('BASE_TABLE', 'EXTERNAL_TABLE') THEN 'TABLE'
+            WHEN object_type IN ('VIEW', 'MATERIALIZED_VIEW') THEN 'VIEW'
+            WHEN object_type IN ('INTERNAL_NAMED', 'EXTERNAL_NAMED') THEN 'STAGE'
             ELSE object_type
         END AS sql_object_type,
-        DATEDIFF(day, objects.created, CURRENT_DATE) AS days_since_creation,
-        DATEDIFF(day, objects.last_altered, CURRENT_DATE) AS days_since_last_alteration,
+        DATEDIFF(DAY, objects.created, CURRENT_DATE) AS days_since_creation,
+        DATEDIFF(DAY, objects.last_altered, CURRENT_DATE) AS days_since_last_alteration,
         TRY_TO_DATE(tgs.expiry_date) AS expiry_date,
-        objects.procedure_owner as object_owner
+        objects.procedure_owner AS object_owner
     FROM
         ${playground_db_name}.information_schema.procedures objects
-    LEFT OUTER JOIN proc_tags tgs
-        ON tgs.object_database = objects.procedure_catalog
+    LEFT OUTER JOIN proc_tags tgs ON
+        tgs.object_database = objects.procedure_catalog
         AND tgs.object_schema = objects.procedure_schema
         AND tgs.object_name = object_name
-    WHERE
-        objects.procedure_catalog = '${playground_db_name}'
-        AND objects.procedure_schema = '${playground_schema_name}'
-        AND objects.procedure_schema != 'INFORMATION_SCHEMA'
+    WHERE -- noqa: L003
+        objects.procedure_catalog = '${playground_db_name}' -- noqa: L003
+        AND objects.procedure_schema = '${playground_schema_name}' -- noqa: L003
+        AND objects.procedure_schema != 'INFORMATION_SCHEMA' -- noqa: L003
 ),
+
 streams AS (
     SELECT
         objects.database_name AS object_catalog,
@@ -182,23 +192,23 @@ streams AS (
         'STREAM' AS object_domain,
         tgs.domain AS tag_domain,
         CASE
-            WHEN object_type in ('BASE_TABLE', 'EXTERNAL_TABLE') THEN 'TABLE'
-            WHEN object_type in ('VIEW', 'MATERIALIZED_VIEW') THEN 'VIEW'
-            WHEN object_type in ('INTERNAL_NAMED', 'EXTERNAL_NAMED') THEN 'STAGE'
+            WHEN object_type IN ('BASE_TABLE', 'EXTERNAL_TABLE') THEN 'TABLE'
+            WHEN object_type IN ('VIEW', 'MATERIALIZED_VIEW') THEN 'VIEW'
+            WHEN object_type IN ('INTERNAL_NAMED', 'EXTERNAL_NAMED') THEN 'STAGE'
             ELSE object_type
         END AS sql_object_type,
-        DATEDIFF(day, objects.created_on, CURRENT_DATE) AS days_since_creation,
+        DATEDIFF(DAY, objects.created_on, CURRENT_DATE) AS days_since_creation,
         NULL AS days_since_last_alteration,
         TRY_TO_DATE(tgs.expiry_date) AS expiry_date,
-        objects.owner as object_owner
+        objects.owner AS object_owner
     FROM
         ${playground_db_name}.${playground_administration_schema_name}.streams objects
-    LEFT OUTER JOIN ${object_tags_view_path} tgs
-        ON tgs.object_database = objects.database_name
+    LEFT OUTER JOIN ${object_tags_view_path} tgs ON
+        tgs.object_database = objects.database_name
         AND tgs.object_schema = objects.schema_name
         AND tgs.object_name = objects.name
-    WHERE
-        (
+    WHERE -- noqa: L003
+        ( -- noqa: L003
             tgs.domain = 'STREAM'
             OR tgs.domain IS NULL
         )
@@ -206,6 +216,7 @@ streams AS (
         AND objects.schema_name = '${playground_schema_name}'
         AND objects.schema_name != 'INFORMATION_SCHEMA'
 ),
+
 tasks AS (
     SELECT
         objects.database_name AS object_catalog,
@@ -215,23 +226,23 @@ tasks AS (
         'TASK' AS object_domain,
         tgs.domain AS tag_domain,
         CASE
-            WHEN object_type in ('BASE_TABLE', 'EXTERNAL_TABLE') THEN 'TABLE'
-            WHEN object_type in ('VIEW', 'MATERIALIZED_VIEW') THEN 'VIEW'
-            WHEN object_type in ('INTERNAL_NAMED', 'EXTERNAL_NAMED') THEN 'STAGE'
+            WHEN object_type IN ('BASE_TABLE', 'EXTERNAL_TABLE') THEN 'TABLE'
+            WHEN object_type IN ('VIEW', 'MATERIALIZED_VIEW') THEN 'VIEW'
+            WHEN object_type IN ('INTERNAL_NAMED', 'EXTERNAL_NAMED') THEN 'STAGE'
             ELSE object_type
         END AS sql_object_type,
-        DATEDIFF(day, objects.created_on, CURRENT_DATE) AS days_since_creation,
-        DATEDIFF(day, objects.last_committed_on, CURRENT_DATE) AS days_since_last_alteration,
+        DATEDIFF(DAY, objects.created_on, CURRENT_DATE) AS days_since_creation,
+        DATEDIFF(DAY, objects.last_committed_on, CURRENT_DATE) AS days_since_last_alteration,
         TRY_TO_DATE(tgs.expiry_date) AS expiry_date,
-        objects.owner as object_owner
+        objects.owner AS object_owner
     FROM
         ${playground_db_name}.${playground_administration_schema_name}.tasks objects
-    LEFT OUTER JOIN ${object_tags_view_path} tgs
-        ON tgs.object_database = objects.database_name
+    LEFT OUTER JOIN ${object_tags_view_path} tgs ON
+        tgs.object_database = objects.database_name
         AND tgs.object_schema = objects.schema_name
         AND tgs.object_name = objects.name
-    WHERE
-        (
+    WHERE -- noqa: L003
+        ( -- noqa: L003
             tgs.domain = 'TASK'
             OR tgs.domain IS NULL
         )
@@ -239,6 +250,7 @@ tasks AS (
         AND objects.schema_name = '${playground_schema_name}'
         AND objects.schema_name != 'INFORMATION_SCHEMA'
 )
+
 SELECT * FROM tbls
 UNION
 SELECT * FROM ext_tbls
@@ -251,5 +263,4 @@ SELECT * FROM procedures
 UNION
 SELECT * FROM streams
 UNION
-SELECT * FROM tasks
-;
+SELECT * FROM tasks;

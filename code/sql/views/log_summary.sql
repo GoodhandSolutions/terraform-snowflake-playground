@@ -3,10 +3,9 @@ SELECT
     action,
     object_type,
     status,
-    result,
+    cmd_result,
     COUNT(*) AS count
 FROM
-    ${tbl_path}
+    ${tbl_path}  --noqa
 GROUP BY
-    1,2,3,4,5
-;
+    1, 2, 3, 4, 5;
