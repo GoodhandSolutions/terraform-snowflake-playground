@@ -2,7 +2,6 @@ DECLARE
     invalid_object_type exception (-20002, 'Invalid Object Type');
 BEGIN
     IF (UPPER(object_type) = 'TASKS') THEN
-
         execute immediate 'TRUNCATE TABLE IF EXISTS ${playground_db}.${playground_administration_schema}.tasks';
         execute immediate 'SHOW TASKS IN SCHEMA ${playground_db}.${playground_schema}';
         INSERT INTO ${playground_db}.${playground_administration_schema}.tasks (
@@ -28,12 +27,11 @@ BEGIN
                 table(result_scan(last_query_id()))
         );
 
-        return 'Updated ${playground_db}.${playground_administration_schema}.tasks to contain the latest list of tasks.';
+        return 'Updated ${playground_db}.${playground_administration_schema}.tasks to contain the latest list of tasks.';  -- noqa: L003
 
     ELSEIF (UPPER(object_type) = 'STREAMS') THEN
-
         execute immediate 'TRUNCATE TABLE IF EXISTS ${playground_db}.${playground_administration_schema}.streams';
-        execute immediate 'SHOW STREAMS IN SCHEMA ${playground_db}.${playground_schema}';
+        execute immediate 'SHOW STREAMS IN SCHEMA ${playground_db}.${playground_schema}';-- noqa: L003
         INSERT INTO ${playground_db}.${playground_administration_schema}.streams (
             SELECT
                 "created_on" AS created_on,
@@ -53,9 +51,7 @@ BEGIN
             FROM
                 table(result_scan(last_query_id()))
         );
-
-        return 'Updated ${playground_db}.${playground_administration_schema}.STREAMS to contain the latest list of tasks.';
-
+        return 'Updated ${playground_db}.${playground_administration_schema}.STREAMS to contain the latest list of tasks.'; -- noqa: L003
     ELSE
         raise invalid_object_type;
     END IF;
@@ -81,5 +77,4 @@ EXCEPTION
                                 'SQLCODE', sqlcode,
                                 'SQLERRM', sqlerrm,
                                 'SQLSTATE', sqlstate);
-END
-;
+END; -- noqa: L003
