@@ -2,17 +2,7 @@
 
 ## Installation
 
-For execution, run:
-
-```bash
-poetry install
-```
-
-If you want to be able to run the tests:
-
-```bash
-poetry install --with test
-```
+For execution, make sure you have setup the Poetry venv from the [top python folder](../../python/).
 
 ## Testing
 
