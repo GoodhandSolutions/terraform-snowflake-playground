@@ -1,6 +1,7 @@
 import datetime
 import json
 import uuid
+import pandas as pd
 
 from snowflake.snowpark.exceptions import SnowparkSQLException
 
@@ -124,7 +125,9 @@ def generate_log_record(row, actions, result):
         "justification": {
             "age": row.DAYS_SINCE_CREATION,
             "days_since_last_alteration": row.DAYS_SINCE_LAST_ALTERATION,
-            "expiry_date": row.EXPIRY_DATE.strftime("%Y-%m-%d"),
+            "expiry_date": row.EXPIRY_DATE.strftime("%Y-%m-%d")
+            if (not pd.isnull(row.EXPIRY_DATE))
+            else None,
         },
         "cmd_result": result,
     }

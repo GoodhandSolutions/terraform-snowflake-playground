@@ -14,7 +14,7 @@ Requirements:
 Setup:
 
 ```bash
-poetry install --dev-dependency
+poetry install --with dev
 ```
 
 Run linting:
