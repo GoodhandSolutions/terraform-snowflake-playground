@@ -17,17 +17,17 @@ def simplify_argument_signature(arguments):
         each argument, in the form:
             arg1_type, arg2_type
     """
-    full_args = arguments.split('(')[1][0:-1]
+    full_args = arguments.split("(")[1][0:-1]
 
     if len(full_args) < 1:
-        return ''
+        return ""
 
     arg_types = []
 
-    for arg in full_args.split(','):
-        arg_types.append(arg.strip().split(' ')[1])
+    for arg in full_args.split(","):
+        arg_types.append(arg.strip().split(" ")[1])
 
-    return ','.join(arg_types)
+    return ",".join(arg_types)
 
 
 def normalize_procedure_name(name, source, arguments=None):
@@ -61,22 +61,19 @@ def normalize_procedure_name(name, source, arguments=None):
         string: normalized description of the procedure in the form:
             "UPDATE_OBJECTS"(VARCHAR)
     """
-    if source in ['INFORMATION_SCHEMA', 'ACCOUNT_USAGE']:
-        return f"\"{name}\"({simplify_argument_signature(arguments)})"
-    elif source == 'SHOW PROCEDURES':
-        name_without_return_type = arguments.split(' ')[0]
-        simplified_argument_signature = name_without_return_type.split(
-            '('
-        )[1][:-1]
+    if source in ["INFORMATION_SCHEMA", "ACCOUNT_USAGE"]:
+        return f'"{name}"({simplify_argument_signature(arguments)})'
+    elif source == "SHOW PROCEDURES":
+        name_without_return_type = arguments.split(" ")[0]
+        simplified_argument_signature = name_without_return_type.split("(")[1][:-1]
 
-        return f"\"{name}\"({simplified_argument_signature})"
-    elif source == 'TAG_REFERENCES':
-        name_without_return_type = name.split(':')[0]
+        return f'"{name}"({simplified_argument_signature})'
+    elif source == "TAG_REFERENCES":
+        name_without_return_type = name.split(":")[0]
         raw_name = f"\"{name_without_return_type.split('(')[0]}\""
 
         return (
-            f"{raw_name}"
-            f"({simplify_argument_signature(name_without_return_type)})"
+            f"{raw_name}" f"({simplify_argument_signature(name_without_return_type)})"
         )
 
     else:
