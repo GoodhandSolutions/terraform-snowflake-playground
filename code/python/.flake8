@@ -1,3 +1,13 @@
 [flake8]
-exclude = .git,__pycache__,docs/source/conf.py,old,build,dist,.venv,.pytest_cache,snapshots
+exclude =
+    .git,
+    __pycache__,
+    docs/source/conf.py,
+    old,
+    build,
+    dist,
+    .venv,
+    .pytest_cache,
+    */snapshots/*,
+    .terraform
 max-line-length = 88
