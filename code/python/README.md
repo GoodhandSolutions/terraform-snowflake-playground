@@ -4,6 +4,12 @@ This folder contains the Python files used in the Procedures deployed by the Ter
 
 There is a top-level poetry configuration which can be used for the sub-folders.
 
+The stages below can be performed using the Makefile:
+
+- `make install`
+- `make lint`
+- `make test`
+
 ## Environment Configuration
 
 ```bash
