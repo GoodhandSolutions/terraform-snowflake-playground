@@ -1,0 +1,12 @@
+name: Lint SQL
+on:
+  pull_request:
+    paths-ignore:
+      - code/sql
+      - .github/workflows
+
+jobs:
+  Lint-SQL:
+    runs-on: ubuntu-latest
+    steps:
+      - run: 'echo "No linting required"'

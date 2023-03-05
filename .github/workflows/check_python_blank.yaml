@@ -6,7 +6,11 @@ on:
       - .github/workflows
 
 jobs:
-  Test-Normalizing-Procedure-Names:
+  Test-Python:
     runs-on: ubuntu-latest
     steps:
-      - run: 'echo "No build required"'
+      - run: 'echo "No test required"'
+  Lint-Python:
+    runs-on: ubuntu-latest
+    steps:
+      - run: 'echo "No linting required"'

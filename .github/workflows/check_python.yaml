@@ -1,0 +1,46 @@
+name: Test Python Functions
+
+on:
+  push:
+    paths:
+      - code/python
+      - .github/workflows
+
+jobs:
+  Test-Python:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.8
+      - name: Install poetry
+        run: pip install poetry
+      - name: Install testing environment
+        working-directory: code/python
+        run: |
+          make install
+      - name: Run tests
+        working-directory: code/python
+        run: make test
+  Lint-Python:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.8
+      - name: Install poetry
+        run: pip install poetry
+      - name: Install testing environment
+        working-directory: code/python
+        run: |
+          make install
+      - name: Lint Python
+        working-directory: code/python
+        run: |
+          make lint
