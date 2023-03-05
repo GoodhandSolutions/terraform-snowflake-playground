@@ -6,6 +6,8 @@
 
 # Local .terraform directories
 **/.terraform/*
+examples/basic/.terraform
+examples/change_playground_parameters/.terraform
 
 # .tfstate files
 *.tfstate

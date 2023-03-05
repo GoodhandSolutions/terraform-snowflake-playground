@@ -57,7 +57,7 @@ BEGIN
         log_record := '{"sql":"' || REPLACE(sql_cmd,'"', '\\"') || '",
                         "action":"DROP_OBJECT",
                         "object_type":"' || object.object_type || '",
-                        "reason_code":"EXPIRED_OBJECT",
+                        "status":"EXPIRED_OBJECT",
                         "reason":"' || drop_reason || '",
                         "justification":{
                             "age":"' || object.days_since_creation || '",
@@ -101,7 +101,7 @@ BEGIN
         log_record := '{"sql":"' || REPLACE(sql_cmd,'"', '\\"') || '",
                         "action":"ALTER_EXPIRY_DATE",
                         "object_type":"' || object.object_type || '",
-                        "reason_code":"ILLEGAL_EXPIRY_DATE",
+                        "status":"ILLEGAL_EXPIRY_DATE",
                         "reason":"Expiry tag is > ${max_expiry_days} days in the future.",
                         "justification":{
                             "expiry_date":' || IFF(object.expiry_date IS NULL, 'null', '"' || object.expiry_date::varchar || '"') || '},
@@ -111,7 +111,7 @@ BEGIN
 
     END FOR;
 
-    return 'Done. To view summary information, run: SELECT action, object_type, reason_code, result, count FROM ${log_summary_view_path} WHERE run_id = \''|| :run_id ||'\';';
+    return 'Done. To view summary information, run: SELECT action, object_type, status, result, count FROM ${log_summary_view_path} WHERE run_id = \''|| :run_id ||'\';';
 EXCEPTION
     WHEN STATEMENT_ERROR THEN
         RETURN OBJECT_CONSTRUCT('Error type', 'STATEMENT_ERROR',

@@ -186,13 +186,13 @@ Module is maintained by [James Goodhand](https://github.com/jagoodhand).
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.1.7 |
-| <a name="requirement_snowflake"></a> [snowflake](#requirement\_snowflake) | 0.54.0 |
+| <a name="requirement_snowflake"></a> [snowflake](#requirement\_snowflake) | >=0.54.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_snowflake"></a> [snowflake](#provider\_snowflake) | 0.54.0 |
+| <a name="provider_snowflake"></a> [snowflake](#provider\_snowflake) | >=0.54.0 |
 
 ## Modules
 
@@ -202,46 +202,46 @@ No modules.
 
 | Name | Type |
 |------|------|
-| [snowflake_database.play](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/database) | resource |
-| [snowflake_database_grant.play_usage](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/database_grant) | resource |
-| [snowflake_function.normalize_proc_names](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/function) | resource |
-| [snowflake_object_parameter.log_table_data_retention](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/object_parameter) | resource |
-| [snowflake_procedure.tidy_playground](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/procedure) | resource |
-| [snowflake_procedure.update_objects](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/procedure) | resource |
-| [snowflake_schema.administration](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/schema) | resource |
-| [snowflake_schema.ground](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/schema) | resource |
-| [snowflake_schema_grant.play_administration_grant_usage](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/schema_grant) | resource |
-| [snowflake_schema_grant.play_ground_grant_external_table](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/schema_grant) | resource |
-| [snowflake_schema_grant.play_ground_grant_file_format](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/schema_grant) | resource |
-| [snowflake_schema_grant.play_ground_grant_function](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/schema_grant) | resource |
-| [snowflake_schema_grant.play_ground_grant_masking_policy](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/schema_grant) | resource |
-| [snowflake_schema_grant.play_ground_grant_materialized_view](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/schema_grant) | resource |
-| [snowflake_schema_grant.play_ground_grant_pipe](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/schema_grant) | resource |
-| [snowflake_schema_grant.play_ground_grant_procedure](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/schema_grant) | resource |
-| [snowflake_schema_grant.play_ground_grant_row_policy](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/schema_grant) | resource |
-| [snowflake_schema_grant.play_ground_grant_sequence](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/schema_grant) | resource |
-| [snowflake_schema_grant.play_ground_grant_stage](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/schema_grant) | resource |
-| [snowflake_schema_grant.play_ground_grant_stream](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/schema_grant) | resource |
-| [snowflake_schema_grant.play_ground_grant_table](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/schema_grant) | resource |
-| [snowflake_schema_grant.play_ground_grant_task](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/schema_grant) | resource |
-| [snowflake_schema_grant.play_ground_grant_temporary_table](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/schema_grant) | resource |
-| [snowflake_schema_grant.play_ground_grant_usage](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/schema_grant) | resource |
-| [snowflake_schema_grant.play_ground_grant_view](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/schema_grant) | resource |
-| [snowflake_table.log_table](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/table) | resource |
-| [snowflake_table.streams](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/table) | resource |
-| [snowflake_table.tasks](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/table) | resource |
-| [snowflake_tag.expiry_date_tag](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/tag) | resource |
-| [snowflake_tag_grant.expiry_date_apply_grant](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/tag_grant) | resource |
-| [snowflake_task.tidy](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/task) | resource |
-| [snowflake_task.update_stream_objects](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/task) | resource |
-| [snowflake_task.update_task_objects](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/task) | resource |
-| [snowflake_view.log_summary](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/view) | resource |
-| [snowflake_view.log_view](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/view) | resource |
-| [snowflake_view.object_ages](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/view) | resource |
-| [snowflake_view.object_tags](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/view) | resource |
-| [snowflake_view_grant.select_object_ages_grant](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/view_grant) | resource |
-| [snowflake_view_grant.select_object_tags_grant](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/view_grant) | resource |
-| [snowflake_warehouse.playground_admin_warehouse](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/0.54.0/docs/resources/warehouse) | resource |
+| [snowflake_database.play](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/database) | resource |
+| [snowflake_database_grant.play_usage](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/database_grant) | resource |
+| [snowflake_function.normalize_proc_names](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/function) | resource |
+| [snowflake_object_parameter.log_table_data_retention](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/object_parameter) | resource |
+| [snowflake_procedure.tidy_playground](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/procedure) | resource |
+| [snowflake_procedure.update_objects](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/procedure) | resource |
+| [snowflake_schema.administration](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/schema) | resource |
+| [snowflake_schema.ground](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/schema) | resource |
+| [snowflake_schema_grant.play_administration_grant_usage](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/schema_grant) | resource |
+| [snowflake_schema_grant.play_ground_grant_external_table](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/schema_grant) | resource |
+| [snowflake_schema_grant.play_ground_grant_file_format](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/schema_grant) | resource |
+| [snowflake_schema_grant.play_ground_grant_function](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/schema_grant) | resource |
+| [snowflake_schema_grant.play_ground_grant_masking_policy](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/schema_grant) | resource |
+| [snowflake_schema_grant.play_ground_grant_materialized_view](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/schema_grant) | resource |
+| [snowflake_schema_grant.play_ground_grant_pipe](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/schema_grant) | resource |
+| [snowflake_schema_grant.play_ground_grant_procedure](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/schema_grant) | resource |
+| [snowflake_schema_grant.play_ground_grant_row_policy](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/schema_grant) | resource |
+| [snowflake_schema_grant.play_ground_grant_sequence](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/schema_grant) | resource |
+| [snowflake_schema_grant.play_ground_grant_stage](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/schema_grant) | resource |
+| [snowflake_schema_grant.play_ground_grant_stream](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/schema_grant) | resource |
+| [snowflake_schema_grant.play_ground_grant_table](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/schema_grant) | resource |
+| [snowflake_schema_grant.play_ground_grant_task](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/schema_grant) | resource |
+| [snowflake_schema_grant.play_ground_grant_temporary_table](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/schema_grant) | resource |
+| [snowflake_schema_grant.play_ground_grant_usage](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/schema_grant) | resource |
+| [snowflake_schema_grant.play_ground_grant_view](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/schema_grant) | resource |
+| [snowflake_table.log_table](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/table) | resource |
+| [snowflake_table.streams](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/table) | resource |
+| [snowflake_table.tasks](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/table) | resource |
+| [snowflake_tag.expiry_date_tag](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/tag) | resource |
+| [snowflake_tag_grant.expiry_date_apply_grant](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/tag_grant) | resource |
+| [snowflake_task.tidy](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/task) | resource |
+| [snowflake_task.update_stream_objects](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/task) | resource |
+| [snowflake_task.update_task_objects](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/task) | resource |
+| [snowflake_view.log_summary](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/view) | resource |
+| [snowflake_view.log_view](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/view) | resource |
+| [snowflake_view.object_ages](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/view) | resource |
+| [snowflake_view.object_tags](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/view) | resource |
+| [snowflake_view_grant.select_object_ages_grant](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/view_grant) | resource |
+| [snowflake_view_grant.select_object_tags_grant](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/view_grant) | resource |
+| [snowflake_warehouse.playground_admin_warehouse](https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs/resources/warehouse) | resource |
 
 ## Inputs
 

@@ -8,5 +8,5 @@ FROM
     snowflake.account_usage.tag_references
 WHERE tag_database = '${expiry_date_tag_database}'
     AND tag_schema = '${expiry_date_tag_schema}'
-    AND object_deleted IS null
-GROUP BY 1,2,3,4;
+    AND object_deleted IS NULL
+GROUP BY 1, 2, 3, 4;

@@ -22,9 +22,31 @@ repos:
         - '--args=--only=terraform_required_providers'
         - '--args=--only=terraform_standard_module_structure'
         - '--args=--only=terraform_workspace_remote'
--   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0  # Use the ref you want to point at
-    hooks:
-      - id: trailing-whitespace
-      - id: check-merge-conflict
-      - id: end-of-file-fixer
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.4.0  # Use the ref you want to point at
+  hooks:
+    - id: trailing-whitespace
+    - id: check-merge-conflict
+    - id: end-of-file-fixer
+- repo: local
+  hooks:
+    - id: pytest-check
+      name: pytest-check
+      language: system
+      entry: bash -c 'cd ./code/python/ && make install && make test'
+      pass_filenames: false
+      always_run: true
+- repo: https://github.com/PyCQA/flake8
+  rev: 6.0.0
+  hooks:
+    - id: flake8
+      always_run: true
+      args: ['--config=./code/python/.flake8']
+- repo: local
+  hooks:
+    - id: sql-linting-check
+      name: sql-linting-check
+      language: system
+      entry: bash -c 'cd ./code/sql/ && make install && make lint'
+      pass_filenames: false
+      always_run: true
