@@ -10,6 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     # Only run for PRs, not issue comments
     if: ${{ github.event.issue.pull_request }}
+    permissions:
+      pull-requests: write
     steps:
     # Generate a GitHub App installation access token from an App ID and private key
     # To create a new GitHub App:
