@@ -1,4 +1,6 @@
-# Run secret-dependent integration tests only after /ok-to-test approval
+# Run secret-dependent integration tests only if trusted PR, or after
+# user with write permissions has commented /ok-to-test on a (fork-based) pull request
+
 on:
   pull_request:
   repository_dispatch:
@@ -6,38 +8,18 @@ on:
 
 name: Integration tests
 
-      # (
-      #   github.event_name == 'pull_request' &&
-      #   github.event.pull_request.head.repo.full_name == github.repository
-      # ) || (
-      #   github.event_name == 'repository_dispatch' &&
-      #   github.event.client_payload.slash_command.args.named.sha != '' &&
-      #   contains(github.event.client_payload.pull_request.head.sha, github.event.client_payload.slash_command.args.named.sha)
-      # )
-
 jobs:
   # Branch-based pull request
-  integration-trusted:
-    runs-on: ubuntu-latest
-    if: |
-      (
-        github.event_name == 'pull_request' &&
-        github.event.pull_request.head.repo.full_name == github.repository
-      )
-    steps:
-      - name: Branch based PR checkout
-        uses: actions/checkout@v3
-
-    # TODO: <insert integration tests needing secrets>
-
-  # Repo owner has commented /ok-to-test on a (fork-based) pull request
-  integration-fork:
+  integration-test:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
       checks: write
-    if: |
+    if: | # source is trusted pr OR ok-to-test
       (
+        github.event_name == 'pull_request' &&
+        github.event.pull_request.head.repo.full_name == github.repository
+      ) || (
         github.event_name == 'repository_dispatch' &&
         github.event.client_payload.slash_command.args.named.sha != '' &&
         contains(
@@ -46,20 +28,41 @@ jobs:
         )
       )
     steps:
-      # Check out merge commit
+      - name: Branch based PR checkout
+        uses: actions/checkout@v3
+        if: | # source is trusted pr
+          (
+            github.event_name == 'pull_request' &&
+            github.event.pull_request.head.repo.full_name == github.repository
+          )
       - name: Fork based /ok-to-test checkout
         uses: actions/checkout@v3
-        with:
-          ref: "refs/pull/${{ github.event.client_payload.pull_request.number }}/merge"
+        if: | # source is ok-to-test
+          (
+            github.event_name == 'repository_dispatch' &&
+            github.event.client_payload.slash_command.args.named.sha != '' &&
+            contains(
+              github.event.client_payload.pull_request.head.sha,
+              github.event.client_payload.slash_command.args.named.sha
+            )
+          )
 
-      # TODO: <insert integration tests needing secrets>
-
+    # TODO: <insert integration tests needing secrets>
       - run: |
           echo "Integration tests... success! ;-)"
+
       # Update check run called "integration-fork"
       - uses: actions/github-script@v6
         id: update-check-run
-        if: ${{ always() }}
+        if: | # source is ok-to-test
+          (
+            github.event_name == 'repository_dispatch' &&
+            github.event.client_payload.slash_command.args.named.sha != '' &&
+            contains(
+              github.event.client_payload.pull_request.head.sha,
+              github.event.client_payload.slash_command.args.named.sha
+            )
+          )
         env:
           number: ${{ github.event.client_payload.pull_request.number }}
           job: ${{ github.job }}
