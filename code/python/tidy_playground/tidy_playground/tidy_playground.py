@@ -168,8 +168,8 @@ def main(
       - string: result summary
     """
     EXPIRY_DATE_TAG = expiry_date_tag
-    MAX_EXPIRY_DAYS = max_expiry_days  # type: ignore
-    MAX_OBJECT_AGE_WITHOUT_TAG = max_object_age_without_tag  # type: ignore
+    MAX_EXPIRY_DAYS = max_expiry_days
+    MAX_OBJECT_AGE_WITHOUT_TAG = max_object_age_without_tag
     OBJECT_AGES_VIEW_PATH = object_ages_view_path
     LOG_TABLE_PATH = log_table_path
     MAX_EXPIRY_TAG_DATE = (
