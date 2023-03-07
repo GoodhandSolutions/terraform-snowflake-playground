@@ -74,6 +74,12 @@ jobs:
         working-directory: tf_provider/
         run: go build
 
+      - uses: actions/cache/save@v3
+        if: ${{ steps.cache-sf-tf-provider.outputs.cache-hit != 'true' }}
+        with:
+          path: tf_provider/terraform-provider-snowflake
+          key: ${{ runner.os }}-sf-tf-provider
+
       - name: Init Terraform for Testing
         working-directory: src/testing/
         run: terraform init
