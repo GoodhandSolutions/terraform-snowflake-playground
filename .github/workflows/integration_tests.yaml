@@ -38,6 +38,8 @@ jobs:
     steps:
       - name: Checkout Playground Source Code
         uses: actions/checkout@v3
+        with:
+          path: src
 
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v2
@@ -51,24 +53,25 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: 'badge/terraform-provider-snowflake'
+          path: build
 
       - name: ls
         run: ls
 
       - name: Get Go Dependencies
-        working-directory: terraform-provider-snowflake/
+        working-directory: build/terraform-provider-snowflake/
         run: go get
 
       - name: Build Provider
-        working-directory: terraform-provider-snowflake/
+        working-directory: build/terraform-provider-snowflake/
         run: go install
 
       - name: ls Provider
-        working-directory: terraform-provider-snowflake/
+        working-directory: build/terraform-provider-snowflake/
         run: ls
 
       - name: Init Terraform for Testing
-        working-directory: testing/
+        working-directory: src/testing/
         run: terraform init
 
       - run: 'echo "$SNOWFLAKE_RSA_KEY" > /tmp/snowflake.p8'
@@ -77,7 +80,7 @@ jobs:
           SSH_KEY: ${{secrets.SNOWFLAKE_RSA_KEY}}
 
       - name: Deploy Test Configuration
-        working-directory: testing/
+        working-directory: src/testing/
         run: terraform plan
 
     # TODO: <insert integration tests needing secrets>
