@@ -61,11 +61,15 @@ jobs:
 
       - name: Build Provider
         working-directory: tf_provider/
-        run: go install
+        run: go build
 
       - name: ls Provider
         working-directory: tf_provider/
         run: ls
+
+      - name: pwd Provider
+        working-directory: tf_provider/
+        run: pwd
 
       - name: Init Terraform for Testing
         working-directory: src/testing/
