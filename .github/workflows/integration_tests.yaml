@@ -44,32 +44,35 @@ jobs:
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v2
 
+      - name: Cache Terraform Provider
+        uses: actions/cache@v3
+        id: cache-sf-tf-provider
+        with:
+          path: tf_provider/terraform-provider-snowflake
+          key: ${{ runner.os }}-sf-tf-provider
+
       - name: Install go
+        if: ${{ steps.cache-sf-tf-provider.outputs.cache-hit != 'true' }}
         uses: actions/setup-go@v3
         with:
           go-version: 'stable'
 
       - name: Checkout Updated Terraform Provider
+        if: ${{ steps.cache-sf-tf-provider.outputs.cache-hit != 'true' }}
         uses: actions/checkout@v3
         with:
           repository: 'badge/terraform-provider-snowflake'
           path: tf_provider
 
       - name: Get Go Dependencies
+        if: ${{ steps.cache-sf-tf-provider.outputs.cache-hit != 'true' }}
         working-directory: tf_provider/
         run: go get
 
       - name: Build Provider
+        if: ${{ steps.cache-sf-tf-provider.outputs.cache-hit != 'true' }}
         working-directory: tf_provider/
         run: go build
-
-      - name: ls Provider
-        working-directory: tf_provider/
-        run: ls
-
-      - name: pwd Provider
-        working-directory: tf_provider/
-        run: pwd
 
       - name: Init Terraform for Testing
         working-directory: src/testing/
@@ -81,7 +84,7 @@ jobs:
 
       - name: Deploy Test Configuration
         working-directory: src/testing/
-        run: terraform plan
+        run: terraform apply -auto-approve
 
     # TODO: <insert integration tests needing secrets>
       - run: |
