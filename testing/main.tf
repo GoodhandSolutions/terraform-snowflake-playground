@@ -24,7 +24,7 @@ provider "snowflake" {
 
   private_key_path = var.snowflake_rsa_key_path
 
-  role = "ACCOUNTADMIN"
+  role = "SYSADMIN"
 }
 
 module "playground" {
