@@ -36,27 +36,36 @@ jobs:
         )
       )
     steps:
-      - name: Branch based PR checkout
+      - name: Checkout Playground Source Code
         uses: actions/checkout@v3
-        if: | # source is trusted pr
-          (
-            github.event_name == 'pull_request' &&
-            github.event.pull_request.head.repo.full_name == github.repository
-          )
-      - name: Fork based /ok-to-test checkout
-        uses: actions/checkout@v3
-        if: | # source is ok-to-test
-          (
-            github.event_name == 'repository_dispatch' &&
-            github.event.client_payload.slash_command.args.named.sha != '' &&
-            contains(
-              github.event.client_payload.pull_request.head.sha,
-              github.event.client_payload.slash_command.args.named.sha
-            )
-          )
 
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v2
+
+      - name: Install go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 'stable'
+
+      - name: Checkout Updated Terraform Provider
+        uses: actions/checkout@v3
+        with:
+          repository: 'badge/terraform-provider-snowflake'
+
+      - name: ls
+        run: ls
+
+      - name: Get Go Dependencies
+        working-directory: terraform-provider-snowflake/
+        run: go get
+
+      - name: Build Provider
+        working-directory: terraform-provider-snowflake/
+        run: go install
+
+      - name: ls Provider
+        working-directory: terraform-provider-snowflake/
+        run: ls
 
       - name: Init Terraform for Testing
         working-directory: testing/
