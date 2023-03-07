@@ -44,4 +44,11 @@ module "playground" {
     name = "playground_test_warehouse"
     size = "xsmall"
   }
+
+  expiry_date_tag = {
+    database = "TEST_PLAYROUND"
+    schema   = "GROUND"
+    name     = "EXPIRY_DATE"
+    create   = true
+  }
 }
