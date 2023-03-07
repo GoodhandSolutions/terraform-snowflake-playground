@@ -590,7 +590,7 @@ resource "snowflake_task" "tidy" {
   warehouse = snowflake_warehouse.playground_admin_warehouse.name
 
   after         = [snowflake_task.update_stream_objects.name]
-  sql_statement = "call ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_procedure.tidy_playground.name}(${var.dry_run}, '${var.expiry_date_tag.database}.${var.expiry_date_tag.schema}.${var.expiry_date_tag.name}', ${var.max_expiry_days}, ${var.max_object_age_without_tag}, '${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_view.object_ages.name}', '${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_table.log_table.name})"
+  sql_statement = "call ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_procedure.tidy_playground.name}(${var.dry_run}, '${var.expiry_date_tag.database}.${var.expiry_date_tag.schema}.${var.expiry_date_tag.name}', ${var.max_expiry_days}, ${var.max_object_age_without_tag}, '${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_view.object_ages.name}', '${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_table.log_table.name}')"
 
   allow_overlapping_execution = false
   enabled                     = var.tasks_enabled
