@@ -75,10 +75,9 @@ jobs:
         working-directory: src/testing/
         run: terraform init
 
-      - run: 'echo "$SNOWFLAKE_RSA_KEY" > /tmp/snowflake.p8'
+      - name: Save Snowflake RSA Key
+        run: echo ${{ secrets.SNOWFLAKE_RSA_KEY }} | base64 -d > /tmp/snowflake.p8
         shell: bash
-        env:
-          SSH_KEY: ${{secrets.SNOWFLAKE_RSA_KEY}}
 
       - name: Deploy Test Configuration
         working-directory: src/testing/
