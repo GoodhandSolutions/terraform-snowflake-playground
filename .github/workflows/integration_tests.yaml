@@ -15,7 +15,11 @@ jobs:
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      TF_CLI_CONFIG_FILE: testing/.terraformrc
+      TF_CLI_CONFIG_FILE: /home/runner/work/terraform-snowflake-playground/terraform-snowflake-playground/testing/.terraformrc
+      TF_VAR_snowflake_rsa_key_path: /tmp/snowflake.p8
+      TF_VAR_snowflake_user: ${{ secrets.SNOWFLAKE_USER_NAME }}
+      TF_VAR_snowflake_account: ${{ secrets.SNOWFLAKE_ACCOUNT_ID }}
+      TF_VAR_snowflake_region: ${{ secrets.SNOWFLAKE_REGION }}
     permissions:
       pull-requests: write
       checks: write
@@ -61,6 +65,11 @@ jobs:
       - name: Init Terraform for Testing
         working-directory: testing/
         run: terraform init
+
+      - run: 'echo "$SNOWFLAKE_RSA_KEY" > /tmp/snowflake.p8'
+        shell: bash
+        env:
+          SSH_KEY: ${{secrets.SNOWFLAKE_RSA_KEY}}
 
       - name: Deploy Test Configuration
         working-directory: testing/
