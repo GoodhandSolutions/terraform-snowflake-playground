@@ -479,9 +479,35 @@ resource "snowflake_procedure" "tidy_playground" {
   handler         = "main"
 
   arguments {
-    name = "DRY_RUN"
+    name = "IS_DRY_RUN"
     type = "BOOLEAN"
   }
+
+  arguments {
+    name = "EXPIRY_DATE_TAG"
+    type = "BOOLEAN"
+  }
+
+  arguments {
+    name = "MAX_EXPIRY_DAYS"
+    type = "BOOLEAN"
+  }
+
+  arguments {
+    name = "MAX_OBJECT_AGE_WITHOUT_TAG"
+    type = "BOOLEAN"
+  }
+
+  arguments {
+    name = "OBJECT_AGES_VIEW_PATH"
+    type = "BOOLEAN"
+  }
+
+  arguments {
+    name = "LOG_TABLE_PATH"
+    type = "BOOLEAN"
+  }
+
   execute_as = "OWNER"
 
   statement = templatefile("${path.module}/code/python/tidy_playground/tidy_playground/tidy_playground.py", {
@@ -492,50 +518,6 @@ resource "snowflake_procedure" "tidy_playground" {
     "expiry_date_tag"            = "${var.expiry_date_tag.database}.${var.expiry_date_tag.schema}.${var.expiry_date_tag.name}"
   })
 }
-
-/*
-resource "snowflake_procedure" "tidy_playground" {
-  depends_on = [
-    snowflake_table.log_table,
-    snowflake_view.object_ages,
-  ]
-
-  database = snowflake_database.play.name
-  schema   = snowflake_schema.administration.name
-  name     = "TIDY_PLAYGROUND"
-
-  language    = "SQL"
-  return_type = "VARCHAR(16777216)"
-  arguments {
-    name = "DRY_RUN"
-    type = "BOOLEAN"
-  }
-  execute_as = "OWNER"
-
-  Includes:
-  ext tables, materialized views, pipes, procedures, stages, streams, tables, tasks, views
-
-  Excludes (because they cannot be tagged):
-  tags, file formats, functions, masking policies, row access policies, sequences
-  Excludes (because they don't exist outside of a session):
-  temp tables
-
-  You can't have views, materialized views, tables or ext tables with the same name.
-  These objects can therefore all be treated as tables.
-
-  statement = templatefile("${path.module}/code/sql/procedures/tidy_playground.sql", {
-    "playground_db"                    = snowflake_database.play.name
-    "playground_schema"                = snowflake_schema.ground.name
-    "playground_administration_schema" = snowflake_schema.administration.name
-    "object_ages_view_path"            = "${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_view.object_ages.name}"
-    "log_summary_view_path"            = "${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_view.log_summary.name}"
-    "log_table_path"                   = "${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_table.log_table.name}"
-    "max_expiry_days"                  = var.max_expiry_days
-    "max_object_age_without_tag"       = var.max_object_age_without_tag
-    "expiry_date_tag_path"             = "${var.expiry_date_tag.database}.${var.expiry_date_tag.schema}.${var.expiry_date_tag.name}"
-  })
-}
-*/
 
 ###############################################################
 # Task to execute clean-up
@@ -608,7 +590,7 @@ resource "snowflake_task" "tidy" {
   warehouse = snowflake_warehouse.playground_admin_warehouse.name
 
   after         = [snowflake_task.update_stream_objects.name]
-  sql_statement = "call ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_procedure.tidy_playground.name}(${var.dry_run})"
+  sql_statement = "call ${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_procedure.tidy_playground.name}(${var.dry_run}, '${var.expiry_date_tag.database}.${var.expiry_date_tag.schema}.${var.expiry_date_tag.name}', ${var.max_expiry_days}, ${var.max_object_age_without_tag}, '${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_view.object_ages.name}', '${snowflake_database.play.name}.${snowflake_schema.administration.name}.${snowflake_table.log_table.name})"
 
   allow_overlapping_execution = false
   enabled                     = var.tasks_enabled
