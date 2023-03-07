@@ -55,10 +55,6 @@ jobs:
             )
           )
 
-      - name: pwd
-        working-directory: testing/
-        run: pwd
-
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v2
 
