@@ -34,9 +34,14 @@ module "playground" {
   dry_run       = true
 
   playground = {
-    database              = "TEST"
+    database              = "TEST_PLAYROUND"
     schema                = "GROUND"
     is_transient          = false
     administration_schema = "ADMINISTRATION"
+  }
+
+  playground_warehouse = {
+    name = "playground_test_warehouse"
+    size = "xsmall"
   }
 }
