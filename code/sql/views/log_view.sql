@@ -1,6 +1,7 @@
 SELECT
     event_time,
     run_id,
+    record:sql::string AS sql_cmd,
     record:action::string AS action,
     record:object_type::string AS object_type,
     record:status::string AS status,

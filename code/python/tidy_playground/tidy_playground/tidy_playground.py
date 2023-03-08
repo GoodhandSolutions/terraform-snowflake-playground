@@ -76,7 +76,7 @@ def determine_actions_from_status(
         reason = "Expiry date for object has passed"
         action = "DROP_OBJECT"
         sql = (
-            f"DROP {object_details.OBJECT_TYPE} "
+            f"DROP {object_details.SQL_OBJECT_TYPE} "
             f'"{object_details.OBJECT_DATABASE}".'
             f'"{object_details.OBJECT_SCHEMA}".'
             f"{object_details.OBJECT_NAME}"
@@ -90,7 +90,7 @@ def determine_actions_from_status(
         )
         action = "DROP_OBJECT"
         sql = (
-            f"DROP {object_details.OBJECT_TYPE} "
+            f"DROP {object_details.SQL_OBJECT_TYPE} "
             f'"{object_details.OBJECT_DATABASE}".'
             f'"{object_details.OBJECT_SCHEMA}".'
             f"{object_details.OBJECT_NAME}"
@@ -103,7 +103,7 @@ def determine_actions_from_status(
         )
         action = "ALTER_EXPIRY_DATE"
         sql = (
-            f"ALTER {object_details.OBJECT_TYPE} "
+            f"ALTER {object_details.SQL_OBJECT_TYPE} "
             f'"{object_details.OBJECT_DATABASE}".'
             f'"{object_details.OBJECT_SCHEMA}".'
             f"{object_details.OBJECT_NAME} "
@@ -204,6 +204,17 @@ def main(
                     cmd_result = "PERMISSION_DENIED"
                     pass
                 else:
+                    log_record = generate_log_record(row, actions, e.message)
+                    log_record_json = (
+                        json.dumps(log_record).replace("'", "\\'").replace('"', '\\"')
+                    )
+                    session.sql(
+                        f"""INSERT INTO {LOG_TABLE_PATH}
+                            (event_time, run_id, record)
+                            SELECT CURRENT_TIMESTAMP(),
+                            '{RUN_ID}',
+                            PARSE_JSON('{log_record_json}')"""
+                    ).collect()
                     raise
 
         log_record = generate_log_record(row, actions, cmd_result)

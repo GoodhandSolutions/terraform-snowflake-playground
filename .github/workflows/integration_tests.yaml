@@ -116,18 +116,18 @@ jobs:
         working-directory: src/testing/test_deployment/
         run: terraform apply -auto-approve
 
-      - name: Init Terraform for Test Objects
-        working-directory: src/testing/test_objects/
-        run: terraform init
+      # - name: Init Terraform for Test Objects
+      #   working-directory: src/testing/test_objects/
+      #   run: terraform init
 
-      - name: Deploy Test Objects
-        working-directory: src/testing/test_objects/
-        run: terraform apply -auto-approve
+      # - name: Deploy Test Objects
+      #   working-directory: src/testing/test_objects/
+      #   run: terraform apply -auto-approve
 
-      - name: Destroy Test Objects
-        if: always()
-        working-directory: src/testing/test_objects/
-        run: terraform apply -destroy -auto-approve
+      # - name: Destroy Test Objects
+      #   if: always()
+      #   working-directory: src/testing/test_objects/
+      #   run: terraform apply -destroy -auto-approve
 
     # TODO: <insert integration tests needing secrets>
       - run: |

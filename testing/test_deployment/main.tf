@@ -55,3 +55,76 @@ module "playground" {
     create   = true
   }
 }
+
+resource "snowflake_table" "static_object_ages" {
+  depends_on = [
+    module.playground
+  ]
+  database = "TEST_PLAYGROUND"
+  schema   = "ADMINISTRATION"
+  name     = "STATIC_OBJECT_AGES"
+
+  column {
+    name = "OBJECT_DATABASE"
+    type = "VARCHAR(16777216)"
+  }
+
+  column {
+    name = "OBJECT_SCHEMA"
+    type = "VARCHAR(16777216)"
+  }
+
+  column {
+    name = "OBJECT_NAME"
+    type = "VARCHAR(16777216)"
+  }
+
+  column {
+    name = "OBJECT_TYPE"
+    type = "VARCHAR(16777216)"
+  }
+
+  column {
+    name = "OBJECT_DOMAIN"
+    type = "VARCHAR(9)"
+  }
+
+  column {
+    name = "TAG_DOMAIN"
+    type = "VARCHAR(16777216)"
+  }
+
+  column {
+    name = "SQL_OBJECT_TYPE"
+    type = "VARCHAR(16777216)"
+  }
+
+  column {
+    name = "DAYS_SINCE_CREATION"
+    type = "NUMBER(9,0)"
+  }
+
+  column {
+    name = "DAYS_SINCE_LAST_ALTERATION"
+    type = "NUMBER(9,0)"
+  }
+
+  column {
+    name = "EXPIRY_DATE"
+    type = "DATE"
+  }
+
+  column {
+    name = "OBJECT_OWNER"
+    type = "VARCHAR(16777216)"
+  }
+}
+
+resource "snowflake_table_grant" "static_object_ages_grant" {
+  database_name = "TEST_PLAYGROUND"
+  schema_name   = "ADMINISTRATION"
+  table_name    = snowflake_table.static_object_ages.name
+
+  privilege = "OWNERSHIP"
+  roles     = ["SYSADMIN"]
+}

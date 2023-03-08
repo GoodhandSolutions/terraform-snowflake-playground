@@ -485,27 +485,27 @@ resource "snowflake_procedure" "tidy_playground" {
 
   arguments {
     name = "EXPIRY_DATE_TAG"
-    type = "BOOLEAN"
+    type = "VARCHAR"
   }
 
   arguments {
     name = "MAX_EXPIRY_DAYS"
-    type = "BOOLEAN"
+    type = "NUMBER"
   }
 
   arguments {
     name = "MAX_OBJECT_AGE_WITHOUT_TAG"
-    type = "BOOLEAN"
+    type = "NUMBER"
   }
 
   arguments {
     name = "OBJECT_AGES_VIEW_PATH"
-    type = "BOOLEAN"
+    type = "VARCHAR"
   }
 
   arguments {
     name = "LOG_TABLE_PATH"
-    type = "BOOLEAN"
+    type = "VARCHAR"
   }
 
   execute_as = "OWNER"
