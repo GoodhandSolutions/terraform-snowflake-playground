@@ -95,9 +95,9 @@ jobs:
       - name: Install SnowSQL
         env:
           SNOWSQL_DEST: /home/runner/work/terraform-snowflake-playground/terraform-snowflake-playground/bin/
-          SNOWSQL_LOGIN_SHELL: ~/.profile
+          SNOWSQL_LOGIN_SHELL: /home/runner/work/terraform-snowflake-playground/terraform-snowflake-playground/.profile
         run: |
-          touch ~/.profile
+          touch /home/runner/work/terraform-snowflake-playground/terraform-snowflake-playground/.profile
           mkdir -p /home/runner/work/terraform-snowflake-playground/terraform-snowflake-playground/bin/
           curl -O https://sfc-repo.snowflakecomputing.com/snowsql/bootstrap/1.2/linux_x86_64/snowsql-1.2.24-linux_x86_64.bash
           curl -O https://sfc-repo.snowflakecomputing.com/snowsql/bootstrap/1.2/linux_x86_64/snowsql-1.2.24-linux_x86_64.bash.sig
