@@ -92,10 +92,15 @@ jobs:
           path: snowsql-1.2.24-linux_x86_64.bash
           key: ${{ runner.os }}-snowsql-1.2.24
 
+      - name: List home
+        run: ls -la ~
+
       - name: Install SnowSQL
         env:
           SNOWSQL_DEST: /home/runner/work/terraform-snowflake-playground/terraform-snowflake-playground/bin/
+          SNOWSQL_LOGIN_SHELL: ~/.profile
         run: |
+          mkdir -p /home/runner/work/terraform-snowflake-playground/terraform-snowflake-playground/bin/
           curl -O https://sfc-repo.snowflakecomputing.com/snowsql/bootstrap/1.2/linux_x86_64/snowsql-1.2.24-linux_x86_64.bash
           curl -O https://sfc-repo.snowflakecomputing.com/snowsql/bootstrap/1.2/linux_x86_64/snowsql-1.2.24-linux_x86_64.bash.sig
           gpg --keyserver hkp://keyserver.ubuntu.com --recv-keys 630D9F3CAB551AF3
