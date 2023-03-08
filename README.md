@@ -23,6 +23,9 @@ Solving these issues manually can be incredibly time consuming and wasteful. A P
 
 - Snowflake Enterprise Edition Account (or above)
   - The module requires object tagging, which is only available in Enterprise edition accounts (and above).
+- A Snowflake role with the permissions:
+  - 'imported privileges' on the database 'SNOWFLAKE' i.e. `GRANT IMPORTED PRIVILEGES ON DATABASE SNOWFLAKE TO ROLE MY_ROLE;`
+  - `EXECUTE TASK`, and `EXECUTE MANAGED TASK` on `ACCOUNT`
 
 ## Getting Started
 
