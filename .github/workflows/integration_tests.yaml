@@ -41,6 +41,10 @@ jobs:
         with:
           path: src
 
+      - name: Save Snowflake RSA Key
+        run: echo ${{ secrets.SNOWFLAKE_RSA_KEY }} | base64 -d > /tmp/snowflake.p8
+        shell: bash
+
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v2
 
@@ -74,23 +78,52 @@ jobs:
         working-directory: tf_provider/
         run: go build
 
-      - uses: actions/cache/save@v3
+      - name: Save TF Provider Binary
+        uses: actions/cache/save@v3
         if: ${{ steps.cache-sf-tf-provider.outputs.cache-hit != 'true' }}
         with:
           path: tf_provider/terraform-provider-snowflake
           key: ${{ runner.os }}-sf-tf-provider
 
-      - name: Init Terraform for Testing
+      - name: Cache SnowSQL Download
+        uses: actions/cache@v3
+        id: cache-snowsql
+        with:
+          path: snowsql-1.2.24-linux_x86_64.bash
+          key: ${{ runner.os }}-snowsql-1.2.24
+
+      - name: Download SnowSQL
+        env:
+          SNOWSQL_DEST: /home/runner/work/terraform-snowflake-playground/terraform-snowflake-playground/bin/
+        run: |
+          curl -O https://sfc-repo.snowflakecomputing.com/snowsql/bootstrap/1.2/linux_x86_64/snowsql-1.2.24-linux_x86_64.bash
+          curl -O https://sfc-repo.snowflakecomputing.com/snowsql/bootstrap/1.2/linux_x86_64/snowsql-1.2.24-linux_x86_64.bash.sig
+          gpg --verify snowsql-1.2.24-linux_x86_64.bash.sig snowsql-1.2.24-linux_x86_64.bash
+          bash snowsql-linux_x86_64.bash
+
+      - name: Check SnowSQL Version
+        run: /home/runner/work/terraform-snowflake-playground/terraform-snowflake-playground/bin/snowsql -v
+
+      - name: Init Terraform for Test Deployment
         working-directory: src/testing/test_deployment/
         run: terraform init
-
-      - name: Save Snowflake RSA Key
-        run: echo ${{ secrets.SNOWFLAKE_RSA_KEY }} | base64 -d > /tmp/snowflake.p8
-        shell: bash
 
       - name: Deploy Test Configuration
         working-directory: src/testing/test_deployment/
         run: terraform apply -auto-approve
+
+      - name: Init Terraform for Test Objects
+        working-directory: src/testing/test_objects/
+        run: terraform init
+
+      - name: Deploy Test Objects
+        working-directory: src/testing/test_objects/
+        run: terraform apply -auto-approve
+
+      - name: Destroy Test Objects
+        if: always()
+        working-directory: src/testing/test_objects/
+        run: terraform apply -destroy -auto-approve
 
     # TODO: <insert integration tests needing secrets>
       - run: |

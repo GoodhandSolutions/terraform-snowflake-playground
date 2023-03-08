@@ -33,8 +33,11 @@ module "playground" {
   tasks_enabled = true
   dry_run       = true
 
+  max_object_age_without_tag = 31
+  max_expiry_days            = 90
+
   playground = {
-    database              = "TEST_PLAYROUND"
+    database              = "TEST_PLAYGROUND"
     schema                = "GROUND"
     is_transient          = false
     administration_schema = "ADMINISTRATION"
@@ -46,8 +49,8 @@ module "playground" {
   }
 
   expiry_date_tag = {
-    database = "TEST_PLAYROUND"
-    schema   = "GROUND"
+    database = "TEST_PLAYGROUND"
+    schema   = "ADMINISTRATION"
     name     = "EXPIRY_DATE"
     create   = true
   }
