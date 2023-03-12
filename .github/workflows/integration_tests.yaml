@@ -116,24 +116,33 @@ jobs:
         working-directory: src/testing/test_deployment/
         run: terraform apply -auto-approve
 
-      # - name: Init Terraform for Test Objects
-      #   working-directory: src/testing/test_objects/
-      #   run: terraform init
+      - name: Init Terraform for Test Objects
+        working-directory: src/testing/test_objects/
+        run: terraform init
 
-      # - name: Deploy Test Objects
-      #   working-directory: src/testing/test_objects/
-      #   run: terraform apply -auto-approve
+      - name: Deploy Test Objects
+        working-directory: src/testing/test_objects/
+        run: terraform apply -auto-approve
 
-      # - name: Destroy Test Objects
-      #   if: always()
-      #   working-directory: src/testing/test_objects/
-      #   run: terraform apply -destroy -auto-approve
+      - name: Install poetry
+        run: pip install poetry
 
-    # TODO: <insert integration tests needing secrets>
+      - name: Install testing environment
+        working-directory: src/testing/test_script/
+        run: poetry install
+
+      - name: Run Snowflake Integration Tests
+        working-directory: src/testing/test_script/
+        run: poetry run pytest
+
+      - name: Destroy Test Objects
+        if: always()
+        working-directory: src/testing/test_deployment/
+        run: terraform apply -destroy -auto-approve
+
       - run: |
           echo "Integration tests... success! ;-)"
 
-      # Update check run called "integration-fork"
       - uses: actions/github-script@v6
         id: update-check-run
         if: | # source is ok-to-test
