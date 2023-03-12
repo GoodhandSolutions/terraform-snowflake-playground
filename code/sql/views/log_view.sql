@@ -1,8 +1,10 @@
 SELECT
     event_time,
     run_id,
-    record:action::string AS action,
+    record:sql::string AS sql_cmd,
+    record:object_path::string AS object_path,
     record:object_type::string AS object_type,
+    record:action::string AS action,
     record:status::string AS status,
     record:reason::string AS reason,
     record:justification:age::number AS object_age,

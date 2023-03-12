@@ -8,6 +8,7 @@
 **/.terraform/*
 examples/basic/.terraform
 examples/change_playground_parameters/.terraform
+testing/*/.terraform
 
 # .tfstate files
 *.tfstate

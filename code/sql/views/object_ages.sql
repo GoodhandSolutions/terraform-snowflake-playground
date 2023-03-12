@@ -29,7 +29,7 @@ tbls AS (
             OR tgs.domain IS NULL
         )
         AND objects.table_catalog = '${playground_db_name}'
-        AND objects.table_schema = 'GROUND'
+        AND objects.table_schema = '${playground_schema_name}'
         AND objects.table_schema != 'INFORMATION_SCHEMA'
 ),
 

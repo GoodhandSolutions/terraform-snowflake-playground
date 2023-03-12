@@ -9,5 +9,6 @@ exclude =
     .venv,
     .pytest_cache,
     */snapshots/*,
+    snap_*.py,
     .terraform
 max-line-length = 88
