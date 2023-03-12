@@ -132,11 +132,11 @@ jobs:
         run: pip install poetry
 
       - name: Install testing environment
-        working-directory: src/testing/test_script/
+        working-directory: src/testing/tests/
         run: poetry install
 
       - name: Run Snowflake Integration Tests
-        working-directory: src/testing/test_script/
+        working-directory: src/testing/tests/
         run: poetry run pytest
 
       - name: Destroy Test Objects
