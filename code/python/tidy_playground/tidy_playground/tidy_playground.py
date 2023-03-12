@@ -46,8 +46,8 @@ def get_illegal_objects(
 def determine_actions_from_status(
     object_details,
     expiry_date_tag,
-    max_object_age_without_tag,
     max_expiry_days,
+    max_object_age_without_tag,
     max_expiry_tag_date,
 ):
     """Determine the action to take for a given object.
@@ -118,8 +118,9 @@ def determine_actions_from_status(
 def generate_log_record(row, actions, result):
     return {
         "sql": actions["sql"],
-        "action": actions["action"],
+        "object_path": f"{row.OBJECT_DATABASE}.{row.OBJECT_SCHEMA}.{row.OBJECT_NAME}",
         "object_type": row.OBJECT_TYPE,
+        "action": actions["action"],
         "status": row.STATUS,
         "reason": actions["reason"],
         "justification": {
@@ -186,8 +187,8 @@ def main(
         actions = determine_actions_from_status(
             row,
             EXPIRY_DATE_TAG,
-            MAX_OBJECT_AGE_WITHOUT_TAG,
             MAX_EXPIRY_DAYS,
+            MAX_OBJECT_AGE_WITHOUT_TAG,
             MAX_EXPIRY_TAG_DATE,
         )
 
