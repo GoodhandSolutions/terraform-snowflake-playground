@@ -20,6 +20,10 @@ jobs:
       TF_VAR_snowflake_user: ${{ secrets.SNOWFLAKE_USER_NAME }}
       TF_VAR_snowflake_account: ${{ secrets.SNOWFLAKE_ACCOUNT_ID }}
       TF_VAR_snowflake_region: ${{ secrets.SNOWFLAKE_REGION }}
+      SNOWFLAKE_RSA_KEY_PATH: /tmp/snowflake.p8
+      SNOWFLAKE_USER_NAME: ${{ secrets.SNOWFLAKE_USER_NAME }}
+      SNOWFLAKE_ACCOUNT_ID: ${{ secrets.SNOWFLAKE_ACCOUNT_ID }}
+      SNOWFLAKE_REGION: ${{ secrets.SNOWFLAKE_REGION }}
     permissions:
       pull-requests: write
       checks: write

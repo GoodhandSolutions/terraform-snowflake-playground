@@ -183,8 +183,6 @@ def test_tidy_playground(snapshot):
     conn = connect_to_snowflake()
     cur = conn.cursor()
 
-    # TODO: Add to integration tests
-
     try:
         cur.execute(
             f"""CALL TEST_PLAYGROUND.ADMINISTRATION.TIDY_PLAYGROUND(
