@@ -1,3 +1,7 @@
+init:
+	$(MAKE) -C test_deployment init && \
+	$(MAKE) -C test_objects init
+
 deploy_test_env:
 	$(MAKE) -C test_deployment deploy && \
 	$(MAKE) -C test_objects deploy

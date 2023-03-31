@@ -70,8 +70,12 @@ jobs:
 
       - name: Deploy Test Environment
         id: deploy_test_env
-        working-directory: src/testing/
-        run: make deploy_test_env
+        working-directory: src/testing/test_deployment
+        run: make deploy
+
+      - name: Deploy Test Objects
+        working-directory: src/testing/test_objects
+        run: make deploy
 
       - name: Run Tests
         working-directory: src/testing/
