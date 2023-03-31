@@ -1,7 +1,7 @@
 init:
 	terraform init
 
-deploy:
+deploy: init
 	terraform apply -auto-approve
 
 destroy:
