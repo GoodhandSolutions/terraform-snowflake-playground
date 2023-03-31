@@ -23,7 +23,7 @@ provider "snowflake" {
 module "playground" {
   source = "../.." #"jagoodhand/playground/snowflake"
 
-  tasks_enabled = true
+  tasks_enabled = false
   dry_run       = true
 
   playground = {

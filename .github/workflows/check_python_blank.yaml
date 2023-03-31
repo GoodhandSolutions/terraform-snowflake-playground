@@ -1,4 +1,5 @@
-name: Test Python Functions
+name: Check Python
+
 on:
   pull_request:
     paths-ignore:

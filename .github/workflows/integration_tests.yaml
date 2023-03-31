@@ -6,7 +6,7 @@ on:
   repository_dispatch:
     types: [ok-to-test-command]
 
-name: Integration Test
+name: Integration Tests
 
 jobs:
   # Branch-based pull request
