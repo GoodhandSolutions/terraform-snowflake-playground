@@ -82,7 +82,7 @@ jobs:
         run: make run_tests
 
       - name: Clean Integration Environment
-        if: steps.deploy_test_env.conclusion == 'success'
+        if: ${{ steps.deploy_test_env.conclusion == 'success' }}
         working-directory: src/testing/
         run: make clean
 
