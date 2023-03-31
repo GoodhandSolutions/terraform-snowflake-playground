@@ -35,6 +35,20 @@ def connect_to_snowflake():
     return conn
 
 
+def test_conn():
+    conn = connect_to_snowflake()
+
+    cur = conn.cursor()
+    try:
+        cur.execute("SELECT CURRENT_VERSION()")
+        df = cur.fetch_pandas_all()
+
+        print()
+        print(df.head())
+    finally:
+        cur.close()
+
+
 def setup_module():
     conn = connect_to_snowflake()
     cur = conn.cursor()
@@ -210,19 +224,5 @@ def test_tidy_playground(snapshot):
         log_summary.drop(columns=["RUN_START_TIME", "RUN_ID"], inplace=True)
         snapshot.assert_match(log_summary)
 
-    finally:
-        cur.close()
-
-
-def test_conn():
-    conn = connect_to_snowflake()
-
-    cur = conn.cursor()
-    try:
-        cur.execute("SELECT CURRENT_VERSION()")
-        df = cur.fetch_pandas_all()
-
-        print()
-        print(df.head())
     finally:
         cur.close()

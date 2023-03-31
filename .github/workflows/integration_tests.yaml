@@ -15,7 +15,6 @@ jobs:
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      TF_CLI_CONFIG_FILE: /home/runner/work/terraform-snowflake-playground/terraform-snowflake-playground/src/testing/test_deployment/.terraformrc
       TF_VAR_snowflake_rsa_key_path: /tmp/snowflake.p8
       TF_VAR_snowflake_user: ${{ secrets.SNOWFLAKE_USER_NAME }}
       TF_VAR_snowflake_account: ${{ secrets.SNOWFLAKE_ACCOUNT_ID }}
@@ -59,12 +58,6 @@ jobs:
           path: tf_provider/terraform-provider-snowflake
           key: ${{ runner.os }}-sf-tf-provider
 
-      - name: Install go
-        if: ${{ steps.cache-sf-tf-provider.outputs.cache-hit != 'true' }}
-        uses: actions/setup-go@v3
-        with:
-          go-version: 'stable'
-
       - name: Checkout Updated Terraform Provider
         if: ${{ steps.cache-sf-tf-provider.outputs.cache-hit != 'true' }}
         uses: actions/checkout@v3
@@ -72,80 +65,29 @@ jobs:
           repository: 'badge/terraform-provider-snowflake'
           path: tf_provider
 
-      - name: Get Go Dependencies
-        if: ${{ steps.cache-sf-tf-provider.outputs.cache-hit != 'true' }}
-        working-directory: tf_provider/
-        run: go get
-
-      - name: Build Provider
-        if: ${{ steps.cache-sf-tf-provider.outputs.cache-hit != 'true' }}
-        working-directory: tf_provider/
-        run: go build
-
-      - name: Save TF Provider Binary
-        uses: actions/cache/save@v3
-        if: ${{ steps.cache-sf-tf-provider.outputs.cache-hit != 'true' }}
-        with:
-          path: tf_provider/terraform-provider-snowflake
-          key: ${{ runner.os }}-sf-tf-provider
-
-      - name: Cache SnowSQL Download
-        uses: actions/cache@v3
-        id: cache-snowsql
-        with:
-          path: snowsql-1.2.24-linux_x86_64.bash
-          key: ${{ runner.os }}-snowsql-1.2.24
-
-      - name: Install SnowSQL
-        env:
-          SNOWSQL_DEST: /home/runner/work/terraform-snowflake-playground/terraform-snowflake-playground/bin/
-          SNOWSQL_LOGIN_SHELL: /home/runner/work/terraform-snowflake-playground/terraform-snowflake-playground/.profile
-        run: |
-          touch /home/runner/work/terraform-snowflake-playground/terraform-snowflake-playground/.profile
-          mkdir -p /home/runner/work/terraform-snowflake-playground/terraform-snowflake-playground/bin/
-          curl -O https://sfc-repo.snowflakecomputing.com/snowsql/bootstrap/1.2/linux_x86_64/snowsql-1.2.24-linux_x86_64.bash
-          curl -O https://sfc-repo.snowflakecomputing.com/snowsql/bootstrap/1.2/linux_x86_64/snowsql-1.2.24-linux_x86_64.bash.sig
-          gpg --keyserver hkp://keyserver.ubuntu.com --recv-keys 630D9F3CAB551AF3
-          gpg --verify snowsql-1.2.24-linux_x86_64.bash.sig snowsql-1.2.24-linux_x86_64.bash
-          bash snowsql-1.2.24-linux_x86_64.bash
-
-      - name: Check SnowSQL Version
-        run: /home/runner/work/terraform-snowflake-playground/terraform-snowflake-playground/bin/snowsql -v
-
-      - name: Init Terraform for Test Deployment
-        working-directory: src/testing/test_deployment/
-        run: terraform init
-
-      - name: Deploy Test Configuration
-        working-directory: src/testing/test_deployment/
-        run: terraform apply -auto-approve
-
-      - name: Init Terraform for Test Objects
-        working-directory: src/testing/test_objects/
-        run: terraform init
-
-      - name: Deploy Test Objects
-        working-directory: src/testing/test_objects/
-        run: terraform apply -auto-approve
-
       - name: Install poetry
         run: pip install poetry
 
-      - name: Install testing environment
-        working-directory: src/testing/tests/
-        run: poetry install
+      - name: Deploy Test Environment
+        id: deploy_test_env
+        working-directory: src/testing/test_deployment
+        run: make deploy
 
-      - name: Run Snowflake Integration Tests
-        working-directory: src/testing/tests/
-        run: poetry run pytest
+      - name: Deploy Test Objects
+        working-directory: src/testing/test_objects
+        run: make deploy
 
-      - name: Destroy Test Objects
-        if: always()
-        working-directory: src/testing/test_deployment/
-        run: terraform apply -destroy -auto-approve
+      - name: Run Tests
+        working-directory: src/testing/
+        run: make run_tests
+
+      - name: Clean Integration Environment
+        if: ${{ (success() || failure()) && (steps.deploy_test_env.conclusion == 'success') }}
+        working-directory: src/testing/
+        run: make clean
 
       - run: |
-          echo "Integration tests... success! ;-)"
+          echo "Integration tests... success! :)"
 
       - uses: actions/github-script@v6
         id: update-check-run
