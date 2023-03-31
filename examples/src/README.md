@@ -4,10 +4,10 @@ This [main.tf](./main.tf) illustrates how to call this Terraform module from the
 
 ```HCL
 module "playground" {
-  source = "../.." #"jagoodhand/playground/snowflake"
+  source = "../.."
 
-  tasks_enabled = true
-  dry_run       = false
+  tasks_enabled = false
+  dry_run       = true
 
   playground = {
     database              = "PLAY"
