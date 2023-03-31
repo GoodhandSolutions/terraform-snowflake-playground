@@ -189,13 +189,13 @@ Module is maintained by [James Goodhand](https://github.com/jagoodhand).
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.1.7 |
-| <a name="requirement_snowflake"></a> [snowflake](#requirement\_snowflake) | >=0.54.0 |
+| <a name="requirement_snowflake"></a> [snowflake](#requirement\_snowflake) | >=0.60.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_snowflake"></a> [snowflake](#provider\_snowflake) | >=0.54.0 |
+| <a name="provider_snowflake"></a> [snowflake](#provider\_snowflake) | >=0.60.0 |
 
 ## Modules
 
